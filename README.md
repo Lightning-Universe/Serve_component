@@ -1,6 +1,6 @@
 # Lightning Serve
 
-Lightning provides a simple python based serving orchestration layer for any frameworks on [lightning.ai](https://lightning.ai/).
+Lightning is a simple and highly customizable framework to orchestrate any ML frameworks serving on [lightning.ai](https://lightning.ai/).
 
 ## API
 
