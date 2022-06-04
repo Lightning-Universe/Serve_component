@@ -31,7 +31,7 @@ async def fn(request: Request, full_path: str):
     if not router_metadata:
         return
 
-    return strategy.on_router_request(request, full_path, local_router_metadata)
+    return await strategy.on_router_request(request, full_path, local_router_metadata)
 
 @app.post("/{full_path:path}")
 async def global_post(request: Request, full_path: str):
