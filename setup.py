@@ -8,7 +8,7 @@ from setuptools import find_packages, setup
 _PATH_ROOT = os.path.dirname(__file__)
 
 
-def _load_py_module(fname, pkg="lightning_hpo"):
+def _load_py_module(fname, pkg="lightning_serve"):
     spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
     py = module_from_spec(spec)
     spec.loader.exec_module(py)
@@ -26,13 +26,13 @@ long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=abo
 # engineer specific practices
 
 setup(
-    name="lightning_hpo",
+    name="lightning_serve",
     version=about.__version__,
     description=about.__docs__,
     author=about.__author__,
     author_email=about.__author_email__,
     url=about.__homepage__,
-    download_url="https://github.com/PyTorchLightning/lightning_hpo",
+    download_url="https://github.com/PyTorchLightning/lightning_serve",
     license=about.__license__,
     packages=find_packages(exclude=["tests", "docs"]),
     long_description=long_description,
@@ -43,7 +43,7 @@ setup(
     python_requires=">=3.6",
     entry_points={
         "lightning.external_components": [
-            "lightning_hpo = lightning_hpo:exported_lightning_components",
+            "lightning_serve = lightning_serve:exported_lightning_components",
         ],
     },
     setup_requires=["wheel"],
