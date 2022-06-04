@@ -52,7 +52,7 @@ Inspired from [Kubernetes deployment strategies](https://github.com/ContainerSol
 
 - [] Batching Inference
 - [] Save, Load for any models (Tensorflow, Keras, PyTorch, PyTorch Lightning).
-- [] Load Balancing
+- [] Auto Scale / Load Balancing
 - [] Sharded Inference
 - [] Native Optimized Kubernetes
 - [] Monitoring (Prometheus, Grafana)
