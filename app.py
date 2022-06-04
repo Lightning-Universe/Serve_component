@@ -1,6 +1,5 @@
 from lightning import LightningFlow, LightningApp
 from lightning_serve import ServeFlow
-from lightning_serve.strategies import BlueGreenStrategy
 from datetime import datetime
 
 class RootFlow(LightningFlow):
@@ -9,7 +8,7 @@ class RootFlow(LightningFlow):
         super().__init__()
 
         self.serve = ServeFlow(
-            strategy=BlueGreenStrategy(),
+            strategy="blue_green",
             script_path="./scripts/serve.py",
         )
 

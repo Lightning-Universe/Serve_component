@@ -18,8 +18,8 @@ class RootFlow(LightningFlow):
         super().__init__()
 
         self.serve = ServeFlow(
+            strategy="blue_green",
             script_path="./scripts/serve.py",
-            strategy=BlueGreenStrategy(),
         )
 
     def run(self):

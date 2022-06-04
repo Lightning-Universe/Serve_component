@@ -1,12 +1,16 @@
 import typing as t
-from lightning import LightningFlow, LightningWork
+from lightning import LightningFlow
 from lightning.structures import List
 from lightning_serve.strategies.base import Strategy
+from lightning_serve.strategies import _STRATEGY_REGISTRY
 from deepdiff import DeepHash
 from lightning.components.python import TracerPythonScript
 import os
 import requests
 from time import time
+
+
+
 
 class ServeWork(TracerPythonScript):
 
@@ -43,14 +47,14 @@ class ServeFlow(LightningFlow):
 
     def __init__(
         self,
-        strategy: Strategy,
+        strategy: t.Union[Strategy, "str"],
         router_refresh: int = 1,
         **work_kwargs,
     ):
         super().__init__()
         self._work_cls = ServeWork
         self._work_kwargs = work_kwargs
-        self._strategy = strategy
+        self._strategy = strategy if isinstance(strategy, Strategy) else _STRATEGY_REGISTRY[strategy]()
         self.serve_works = List()
         self.hashes = []
         self.router = BaseRouter()
