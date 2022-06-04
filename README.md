@@ -1,10 +1,10 @@
 # Lightning Serve
 
-Lightning provides python based serving orchestration layer for serving any frameworks.
+Lightning provides a simple python based serving orchestration layer for any frameworks on [lightning.ai](https://lightning.ai/).
 
 ## API
 
-The Lightning Serve library exposes 1 main class: `ServeFlow` and associated strategies such as `BlueGreenStrategy`.
+The `Lightning Serve` library exposes `ServeFlow` and several strategies such as `BlueGreenStrategy`, `RecreateStrategy`, etc...
 
 ```py
 from lightning import LightningFlow, LightningApp
@@ -18,8 +18,8 @@ class RootFlow(LightningFlow):
         super().__init__()
 
         self.serve = ServeFlow(
-            strategy=BlueGreenStrategy(),
             script_path="./scripts/serve.py",
+            strategy=BlueGreenStrategy(),
         )
 
     def run(self):
@@ -45,3 +45,14 @@ Inspired from [Kubernetes deployment strategies](https://github.com/ContainerSol
     - [] cookie
     - [x] weight
 [] shadow: release a new version alongside the old version. Incoming traffic is mirrored to the new version and doesn't impact the response.
+
+
+## Coming Soon.
+
+[] Batching and Auto Batching
+[] Save, Load for any models (Tensorflow, Keras, PyTorch, PyTorch Lightning).
+[] Load Balancing
+[] Sharded Inference
+[] Native Optimized Kubernetes
+[] Monitoring (Prometheus, Grafana)
+[] Built-in Load Testing.
