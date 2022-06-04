@@ -13,7 +13,7 @@ class Strategy(abc.ABC):
 
     async def on_router_request(self, request: Request, full_path: str, local_router_metadata: Any):
         random_url = np.random.choice(list(local_router_metadata.keys()), p=list(local_router_metadata.values()))
-        response = getattr(requests, request.method)(random_url + "/" + full_path, data=await request.body())
+        response = getattr(requests, request.method.lower())(random_url + "/" + full_path, data=await request.body())
         return response.json()
 
     @abc.abstractmethod
