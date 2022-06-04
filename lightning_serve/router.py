@@ -2,8 +2,6 @@ from fastapi import FastAPI, Request
 from uvicorn import run
 import argparse
 import asyncio
-import numpy as np
-import requests
 from copy import deepcopy
 
 parser = argparse.ArgumentParser()
@@ -14,44 +12,34 @@ hparams = parser.parse_args()
 app = FastAPI()
 router = globals()["router"]
 lock = asyncio.Lock()
-routing = None
+router_metadata = None
+strategy = globals()["strategy"]
 
 @app.post("/update_router")
 async def update_router(request: Request):
-    global routing
-    routing = await request.json()
+    global router_metadata
+    local_router_metadata = await request.json()
     async with lock:
-        print(routing)
+        router_metadata = local_router_metadata
+        print(router_metadata)
+
+async def fn(request: Request, full_path: str):
+    global router_metadata
+    async with lock:
+        local_router_metadata = deepcopy(router_metadata)
+
+    if not router_metadata:
+        return
+
+    return strategy.on_router_request(request, full_path, local_router_metadata)
 
 @app.post("/{full_path:path}")
 async def global_post(request: Request, full_path: str):
-    global routing
-    async with lock:
-        local_routing = deepcopy(routing)
-
-    print(local_routing)
-
-    if not local_routing:
-        return
-
-    random_url = np.random.choice(list(local_routing.keys()), p=list(local_routing.values()))
-    response = requests.post(random_url + "/" + full_path, data=await request.body())
-    return response.json()
+   return await fn(request, full_path)
 
 @app.get("/{full_path:path}")
 async def global_get(request: Request, full_path: str):
-    global routing
-    async with lock:
-        local_routing = deepcopy(routing)
-
-    print(local_routing)
-
-    if not routing:
-        return
-
-    random_url = np.random.choice(list(local_routing.keys()), p=list(local_routing.values()))
-    response = requests.get(random_url + "/" + full_path, data=await request.body())
-    return response.json()
+    return await fn(request, full_path)
 
 print(f"Running router on {hparams.host}:{hparams.port}")
 

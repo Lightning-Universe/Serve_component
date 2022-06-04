@@ -1,6 +1,7 @@
 from lightning import LightningFlow, LightningApp
-from lightning_serve import ServeFlow, ServeWork
-from lightning_serve.strategies import WeightedStrategy
+from lightning_serve import ServeFlow
+from lightning_serve.strategies import BlueGreenStrategy
+from datetime import datetime
 
 class RootFlow(LightningFlow):
 
@@ -8,18 +9,15 @@ class RootFlow(LightningFlow):
         super().__init__()
 
         self.serve = ServeFlow(
-            ServeWork,
-            strategy=WeightedStrategy(),
-            work_kwargs=dict(script_path="./scripts/serve.py", raise_exception=True)
+            strategy=BlueGreenStrategy(),
+            script_path="./scripts/serve.py",
         )
-        self.counter = 1
 
     def run(self):
-        self.serve.run(counter=self.counter)
-        if self.counter < 2:
-            self.counter += 1
+        # Deploy a new server every time the provided input changed and shutdown the previous when the new one is ready.
+        self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H:%M"))
 
     def configure_layout(self):
-        return {"name": "Serve", "content": self.serve.base_url + "/predict"}
+        return {"name": "Serve", "content": self.serve.url + "/predict"}
 
 app = LightningApp(RootFlow(), debug=True)

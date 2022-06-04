@@ -11,7 +11,7 @@ app = FastAPI()
 
 @app.get("/predict")
 async def predict(request: Request):
-    return globals()["counter"]
+    return globals()["random_kwargs"]
 
 print(f"Running on {hparams.host}:{hparams.port}")
 
