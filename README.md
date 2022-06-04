@@ -33,7 +33,7 @@ class RootFlow(LightningFlow):
 app = LightningApp(RootFlow())
 ```
 
-## Currently Support Strategy:
+### Currently Supported Strategy
 
 Inspired from [Kubernetes deployment strategies](https://github.com/ContainerSolutions/k8s-deployment-strategies)
 
@@ -48,9 +48,9 @@ Inspired from [Kubernetes deployment strategies](https://github.com/ContainerSol
 - [] shadow: release a new version alongside the old version. Incoming traffic is mirrored to the new version and doesn't impact the response.
 
 
-## Coming Soon.
+### Coming Soon
 
-- [] Batching and Auto Batching
+- [] Batching Inference
 - [] Save, Load for any models (Tensorflow, Keras, PyTorch, PyTorch Lightning).
 - [] Load Balancing
 - [] Sharded Inference
