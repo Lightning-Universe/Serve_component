@@ -13,9 +13,9 @@ class ABTestingStrategy(Strategy):
         assert method in self.METHODS
         self.method = method
 
-    async def process_request(self, request: Request, full_path: str, local_router_metadata: Any):
+    def select_url(self, request: Request, full_path: str, local_router_metadata: Any) -> str:
         if self.method == "weighted":
-            return super().process_request(request, full_path, local_router_metadata)
+            return super().select_url(request, full_path, local_router_metadata)
         else:
             raise NotImplementedError
 

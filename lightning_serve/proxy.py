@@ -3,6 +3,7 @@ from uvicorn import run
 import argparse
 import asyncio
 from copy import deepcopy
+import requests
 
 PROXY_ENDPOINT = "/api/v1/proxy"
 app = FastAPI()
@@ -44,7 +45,10 @@ def main():
         if not proxy_metadata:
             return
 
-        return await strategy.process_request(request, full_path, local_proxy_metadata)
+        selected_url = strategy.select_url(request, full_path, local_proxy_metadata)
+        method = request.method.lower()
+        response = getattr(requests, method)(selected_url + "/" + full_path, data=await request.body())
+        return response.json()
 
     @app.post("/{full_path:path}")
     async def global_post(request: Request, full_path: str):
