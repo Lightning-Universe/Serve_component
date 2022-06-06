@@ -1,6 +1,6 @@
 # Lightning Serve
 
-Lightning is a simple and highly customizable framework to orchestrate most ML serving frameworks on [lightning.ai](https://lightning.ai/).
+Lightning Serve is a simple and highly customizable framework to orchestrate most ML serving frameworks on [lightning.ai](https://lightning.ai/).
 
 ## API
 
