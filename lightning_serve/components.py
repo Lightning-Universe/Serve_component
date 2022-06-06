@@ -1,20 +1,19 @@
-import typing as t
-from lightning import LightningFlow
-from lightning.structures import List
-from lightning_serve.strategies.base import Strategy
-from lightning_serve.strategies import _STRATEGY_REGISTRY
-from deepdiff import DeepHash
-from lightning.components.python import TracerPythonScript
 import os
-import requests
-from lightning_serve.proxy import PROXY_ENDPOINT
+import typing as t
 from time import time
 
+import requests
+from deepdiff import DeepHash
 
+from lightning import LightningFlow
+from lightning.components.python import TracerPythonScript
+from lightning.structures import List
+from lightning_serve.proxy import PROXY_ENDPOINT
+from lightning_serve.strategies import _STRATEGY_REGISTRY
+from lightning_serve.strategies.base import Strategy
 
 
 class ServeWork(TracerPythonScript):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, parallel=True, **kwargs)
 
@@ -25,8 +24,8 @@ class ServeWork(TracerPythonScript):
     def alive(self):
         return self.url != ""
 
-class Proxy(TracerPythonScript):
 
+class Proxy(TracerPythonScript):
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
@@ -44,8 +43,8 @@ class Proxy(TracerPythonScript):
     def alive(self):
         return self.url != ""
 
-class ServeFlow(LightningFlow):
 
+class ServeFlow(LightningFlow):
     def __init__(
         self,
         strategy: t.Union[Strategy, "str"],
@@ -55,7 +54,11 @@ class ServeFlow(LightningFlow):
         super().__init__()
         self._work_cls = ServeWork
         self._work_kwargs = work_kwargs
-        self._strategy = strategy if isinstance(strategy, Strategy) else _STRATEGY_REGISTRY[strategy]()
+        self._strategy = (
+            strategy
+            if isinstance(strategy, Strategy)
+            else _STRATEGY_REGISTRY[strategy]()
+        )
         self.serve_works = List()
         self.hashes = []
         self.proxy = Proxy()

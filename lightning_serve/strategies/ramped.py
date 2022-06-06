@@ -1,12 +1,12 @@
-from lightning import LightningWork
-from lightning_serve.strategies.base import Strategy
-from lightning.structures import List
 from time import time
+
+from lightning import LightningWork
+from lightning.structures import List
+from lightning_serve.strategies.base import Strategy
 
 
 class RampedStrategy(Strategy):
-
-    def __init__(self, transition_time_in_seconds: float = 120.):
+    def __init__(self, transition_time_in_seconds: float = 120.0):
         super().__init__()
         self.transition_time_in_seconds = transition_time_in_seconds
         self.serve_works_ramped_time = {}
@@ -19,8 +19,13 @@ class RampedStrategy(Strategy):
 
         # Step 2: Compute the current ramped score to transfer requests load.
         current_time = time()
-        total_ramped_score = .0
-        running_serve_works = [w for w in serve_works[:-1] if (w.url in self.ramped_scores and self.ramped_scores[w.url]) > 0 or w.url not in self.ramped_scores]
+        total_ramped_score = 0.0
+        running_serve_works = [
+            w
+            for w in serve_works[:-1]
+            if (w.url in self.ramped_scores and self.ramped_scores[w.url]) > 0
+            or w.url not in self.ramped_scores
+        ]
         for w in running_serve_works:
             if w.url not in self.serve_works_ramped_time:
                 self.serve_works_ramped_time[w.url] = current_time
@@ -28,8 +33,10 @@ class RampedStrategy(Strategy):
 
             time_left = current_time - self.serve_works_ramped_time[w.url]
             if time_left < self.transition_time_in_seconds:
-                ramped_score = (self.transition_time_in_seconds - time_left) / (self.transition_time_in_seconds * len(running_serve_works))
-                self.ramped_scores[w.url]  = ramped_score
+                ramped_score = (self.transition_time_in_seconds - time_left) / (
+                    self.transition_time_in_seconds * len(running_serve_works)
+                )
+                self.ramped_scores[w.url] = ramped_score
                 total_ramped_score += ramped_score
 
             else:

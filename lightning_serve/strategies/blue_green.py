@@ -4,7 +4,6 @@ from lightning_serve.strategies.base import Strategy
 
 
 class BlueGreenStrategy(Strategy):
-
     def run(self, serve_works: List[LightningWork]):
         if len(serve_works) == 1:
             return {serve_works[-1].url: 1.0}

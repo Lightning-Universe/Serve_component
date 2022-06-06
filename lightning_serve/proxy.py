@@ -1,13 +1,15 @@
-from fastapi import FastAPI, Request
-from uvicorn import run
 import argparse
 import asyncio
 from copy import deepcopy
+
+from fastapi import FastAPI, Request
+from uvicorn import run
 
 PROXY_ENDPOINT = "/api/v1/proxy"
 app = FastAPI()
 lock = asyncio.Lock()
 proxy_metadata = None
+
 
 def main():
     global proxy
@@ -57,7 +59,12 @@ def main():
 
     print(f"Running proxy on {hparams.host}:{hparams.port}")
 
-    run(app, host=hparams.host.replace("http://", "").replace("https://", ""), port=int(hparams.port))
+    run(
+        app,
+        host=hparams.host.replace("http://", "").replace("https://", ""),
+        port=int(hparams.port),
+    )
+
 
 if __name__ == "__main__":
     main()
