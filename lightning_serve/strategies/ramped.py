@@ -36,4 +36,4 @@ class RampedStrategy(Strategy):
                 self.ramped_scores[w.url] = 0
 
         self.ramped_scores[serve_works[-1].url] = 1.0 - total_ramped_score
-        return {k: v for k, v in self.ramped_scores if v > 0}
+        return {k: v for k, v in self.ramped_scores.items() if v > 0}
