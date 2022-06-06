@@ -30,9 +30,9 @@ class ShadowStrategy(Strategy):
             current_future: ApplyResult = self.pool.apply_async(partial(method_fn, url=current_endpoint + "/" + full_path, data=data))
             shadow_future: ApplyResult = self.pool.apply_async(partial(method_fn, url=shadow_endpoint + "/" + full_path, data=data))
 
-            current_result = current_future.get()
+            current_result: Response = current_future.get()
             if self.wait_for_shadow_result:
-                shadow_result = shadow_future.get()
+                shadow_result: Response = shadow_future.get()
                 if shadow_result.status_code != 200:
                     print(f"The shadow server hasn't properly processed the request {shadow_result.json()}")
             return current_result
