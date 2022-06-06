@@ -43,7 +43,7 @@ Inspired from [Kubernetes deployment strategies](https://github.com/ContainerSol
 - [x] a/b testing: release a new version to a subset of users in a precise way
     - [] (HTTP headers)
     - [] cookie
-    - [x] weight
+    - [x] weighted
 - [] shadow: release a new version alongside the old version. Incoming traffic is mirrored to the new version and doesn't impact the response.
 
 
