@@ -44,7 +44,7 @@ Inspired from [Kubernetes deployment strategies](https://github.com/ContainerSol
     - [] (HTTP headers)
     - [] cookie
     - [x] weighted
-- [x]] shadow: release a new version alongside the old version. Incoming traffic is mirrored to the new version and doesn't impact the response.
+- [x] shadow: release a new version alongside the old version. Incoming traffic is mirrored to the new version and doesn't impact the response.
 
 
 ### Coming Soon
