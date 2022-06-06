@@ -2,6 +2,7 @@ from lightning import LightningWork
 from lightning.structures import List
 from lightning_serve.strategies.base import Strategy
 from fastapi import Request
+from requests import Response
 from typing import Any
 
 
@@ -13,9 +14,9 @@ class ABTestingStrategy(Strategy):
         assert method in self.METHODS
         self.method = method
 
-    def select_url(self, request: Request, full_path: str, local_router_metadata: Any) -> str:
+    async def make_request(self, request: Request, full_path: str, local_router_metadata: Any) -> Response:
         if self.method == "weighted":
-            return super().select_url(request, full_path, local_router_metadata)
+            return await super().make_request(request, full_path, local_router_metadata)
         else:
             raise NotImplementedError
 

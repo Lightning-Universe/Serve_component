@@ -8,7 +8,7 @@ class RootFlow(LightningFlow):
         super().__init__()
 
         self.serve = ServeFlow(
-            strategy="ramped",
+            strategy="shadow",
             script_path="./scripts/serve.py",
         )
 

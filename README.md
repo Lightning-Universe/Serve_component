@@ -41,10 +41,10 @@ Inspired from [Kubernetes deployment strategies](https://github.com/ContainerSol
 - [x] blue/green: release a new version alongside the old version then switch traffic
 - [] canary: release a new version to a subset of users, then proceed to a full rollout
 - [x] a/b testing: release a new version to a subset of users in a precise way
-    - [x] (HTTP headers)
+    - [] (HTTP headers)
     - [] cookie
     - [x] weight
-- [] shadow: release a new version alongside the old version. Incoming traffic is mirrored to the new version and doesn't impact the response.
+- [x]] shadow: release a new version alongside the old version. Incoming traffic is mirrored to the new version and doesn't impact the response.
 
 
 ### Coming Soon
