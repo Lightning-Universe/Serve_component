@@ -36,23 +36,21 @@ def main():
         async with lock:
             return proxy_metadata
 
-    async def make_request(method: str, selected_url: str, full_path: str, request: Request):
+    async def make_request(selected_url: str, full_path: str, request: Request) -> requests.Response:
+        method = request.method.lower()
         return getattr(requests, method)(selected_url + "/" + full_path, data=await request.body())
 
     async def fn(request: Request, full_path: str):
         global proxy_metadata
 
-        async with lock:
-            local_proxy_metadata = deepcopy(proxy_metadata)
-
         if not proxy_metadata:
             return
 
-        method = request.method.lower()
+        async with lock:
+            local_proxy_metadata = deepcopy(proxy_metadata)
 
         selected_url = strategy.select_url(request, full_path, local_proxy_metadata)
-        response = await make_request(method, selected_url, full_path, request)
-
+        response = await make_request(selected_url, full_path, request)
         return response.json()
 
     @app.post("/{full_path:path}")
