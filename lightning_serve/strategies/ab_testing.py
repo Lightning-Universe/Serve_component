@@ -12,11 +12,10 @@ class ABTestingStrategy(Strategy):
     def __init__(self, method: str):
         assert method in self.METHODS
         self.method = method
-        self.urls = {}
 
-    async def on_router_request(self, request: Request, full_path: str, local_router_metadata: Any):
+    async def process_request(self, request: Request, full_path: str, local_router_metadata: Any):
         if self.method == "weighted":
-            return super().on_router_request(request, full_path, local_router_metadata)
+            return super().process_request(request, full_path, local_router_metadata)
         else:
             raise NotImplementedError
 

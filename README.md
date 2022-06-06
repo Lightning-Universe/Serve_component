@@ -9,7 +9,6 @@ The `Lightning Serve` library exposes `ServeFlow` and several strategies such as
 ```py
 from lightning import LightningFlow, LightningApp
 from lightning_serve import ServeFlow
-from lightning_serve.strategies import BlueGreenStrategy
 from datetime import datetime
 
 class RootFlow(LightningFlow):
@@ -30,7 +29,7 @@ class RootFlow(LightningFlow):
     def configure_layout(self):
         return {"name": "Serve", "content": self.serve.url + "/predict"}
 
-app = LightningApp(RootFlow())
+app = LightningApp(RootFlow(), debug=True)ß
 ```
 
 ### Currently Supported Strategy

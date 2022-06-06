@@ -8,7 +8,7 @@ class RootFlow(LightningFlow):
         super().__init__()
 
         self.serve = ServeFlow(
-            strategy="blue_green",
+            strategy="ramped",
             script_path="./scripts/serve.py",
         )
 
@@ -18,6 +18,6 @@ class RootFlow(LightningFlow):
         self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H:%M"))
 
     def configure_layout(self):
-        return {"name": "Serve", "content": self.serve.url + "/predict"}
+        return {"name": "Serve", "content": self.serve.proxy.url + "/predict"}
 
 app = LightningApp(RootFlow(), debug=True)

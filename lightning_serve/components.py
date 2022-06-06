@@ -7,6 +7,7 @@ from deepdiff import DeepHash
 from lightning.components.python import TracerPythonScript
 import os
 import requests
+from lightning_serve.proxy import PROXY_ENDPOINT
 from time import time
 
 
@@ -24,13 +25,13 @@ class ServeWork(TracerPythonScript):
     def alive(self):
         return self.url != ""
 
-class BaseRouter(TracerPythonScript):
+class Proxy(TracerPythonScript):
 
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
             parallel=True,
-            script_path=os.path.join(os.path.dirname(__file__), "router.py"),
+            script_path=os.path.join(os.path.dirname(__file__), "proxy.py"),
             raise_exception=True,
             **kwargs,
         )
@@ -38,7 +39,7 @@ class BaseRouter(TracerPythonScript):
 
     def run(self, **kwargs):
         self.script_args += [f"--host={self.host}", f"--port={self.port}"]
-        super().run(router=self, **kwargs)
+        super().run(proxy=self, **kwargs)
 
     def alive(self):
         return self.url != ""
@@ -57,14 +58,16 @@ class ServeFlow(LightningFlow):
         self._strategy = strategy if isinstance(strategy, Strategy) else _STRATEGY_REGISTRY[strategy]()
         self.serve_works = List()
         self.hashes = []
-        self.router = BaseRouter()
-        self.url = ""
+        self.proxy = Proxy()
         self._router_refresh = router_refresh
         self._last_update_time = time()
 
     def run(self, **kwargs):
-        if not self.router.has_started:
-            self.router.run(strategy=self._strategy)
+        # Step 1: Start the proxy
+        if not self.proxy.has_started:
+            self.proxy.run(strategy=self._strategy)
+
+        # Step 2: Compute a hash of the keyword arguments.
         call_hash = DeepHash(kwargs)[kwargs]
         if call_hash not in self.hashes:
             serve_work = self._work_cls(**(self._work_kwargs or {}))
@@ -72,13 +75,9 @@ class ServeFlow(LightningFlow):
             self.serve_works.append(serve_work)
             serve_work.run(**kwargs)
 
-        if self.router.alive() and self.serve_works[-1].alive():
+        if self.proxy.alive() and self.serve_works[-1].alive():
             res = self._strategy.run(self.serve_works)
-            if len(self.serve_works) == 1:
-                self.url = list(res.keys())[0]
-            else:
-                new_update_time = time()
-                if (new_update_time - self._last_update_time) > self._router_refresh:
-                    requests.post(self.router.url + "/update_router", json=res)
-                    self._last_update_time = new_update_time
-                    self.url = self.router.url
+            new_update_time = time()
+            if (new_update_time - self._last_update_time) > self._router_refresh:
+                requests.post(self.proxy.url + PROXY_ENDPOINT, json=res)
+                self._last_update_time = new_update_time

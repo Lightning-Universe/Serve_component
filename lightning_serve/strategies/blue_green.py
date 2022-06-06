@@ -6,12 +6,12 @@ from lightning_serve.strategies.base import Strategy
 class BlueGreenStrategy(Strategy):
 
     def run(self, serve_works: List[LightningWork]):
-        if len(serve_works) < 2:
-            return {w.url: 1.0 for w in serve_works}
+        if len(serve_works) == 1:
+            return {serve_works[-1].url: 1.0}
 
-        latest_serve_work = serve_works[-1]
-        if latest_serve_work.url != "":
+        if serve_works[-1].alive():
             for serve_work in serve_works[:-1]:
                 serve_work.stop()
-
-        return {latest_serve_work.url: 1.0}
+            return {serve_works[-1].url: 1.0}
+        else:
+            return {serve_works[-2].url: 1.0}
