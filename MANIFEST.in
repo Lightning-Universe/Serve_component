@@ -1,4 +1,6 @@
 include *.py
 include *.txt
 exclude *.lightning
-exclude *.gridignore
+exclude *.lightningignore
+exclude .pre-commit-config.yaml
+exclude scripts/serve.py
