@@ -29,7 +29,7 @@ class RootFlow(LightningFlow):
     def configure_layout(self):
         return {"name": "Serve", "content": self.serve.url + "/predict"}
 
-app = LightningApp(RootFlow(), debug=True)ß
+app = LightningApp(RootFlow(), debug=True)
 ```
 
 ### Currently Supported Strategy
