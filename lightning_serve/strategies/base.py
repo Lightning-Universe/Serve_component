@@ -7,7 +7,7 @@ from fastapi import Request
 from requests import Response
 
 from lightning import LightningWork
-from lightning.structures import List
+from lightning.app.structures import List
 
 
 class Strategy(abc.ABC):

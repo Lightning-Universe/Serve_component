@@ -1,7 +1,7 @@
 from time import time
 
 from lightning import LightningWork
-from lightning.structures import List
+from lightning.app.structures import List
 from lightning_serve.strategies.base import Strategy
 
 
