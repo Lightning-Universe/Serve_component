@@ -6,8 +6,8 @@ import requests
 from deepdiff import DeepHash
 
 from lightning import LightningFlow
-from lightning.components.python import TracerPythonScript
-from lightning.structures import List
+from lightning.app.components.python import TracerPythonScript
+from lightning.app.structures import List
 from lightning_serve.proxy import PROXY_ENDPOINT
 from lightning_serve.strategies import _STRATEGY_REGISTRY
 from lightning_serve.strategies.base import Strategy
