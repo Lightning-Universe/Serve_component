@@ -111,3 +111,11 @@ class ServeFlow(LightningFlow):
 
         if self.proxy.alive():
             self.locust.run(self.proxy.url)
+
+    def configure_layout(self):
+        if self.proxy.alive() and self.serve_works[-1].alive():
+            tab_proxy_url = self.proxy.url + "/predict"
+        else:
+            tab_proxy_url = ""
+        tab_proxy = [{"name": "Serve", "content": tab_proxy_url}]
+        return tab_proxy + [{"name": "API Testing", "content": self.locust}]

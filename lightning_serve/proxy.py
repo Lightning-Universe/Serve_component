@@ -3,6 +3,7 @@ import asyncio
 from copy import deepcopy
 
 from fastapi import FastAPI, Request
+from requests import Response
 from uvicorn import run
 
 PROXY_ENDPOINT = "/api/v1/proxy"
@@ -41,7 +42,9 @@ def main():
         global proxy_metadata
 
         if not proxy_metadata:
-            return
+            resp = Response()
+            resp.status_code = 404
+            return resp
 
         async with lock:
             local_proxy_metadata = deepcopy(proxy_metadata)

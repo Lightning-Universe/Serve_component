@@ -10,20 +10,17 @@ class RootFlow(LightningFlow):
         super().__init__()
 
         self.serve = ServeFlow(
-            strategy="shadow",
+            strategy="blue_green",
             script_path="./scripts/serve.py",
         )
 
     def run(self):
         # Deploy a new server every time the provided input changes
         # and shutdown the previous server once the new one is ready.
-        self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H:%M"))
+        self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H"))
 
     def configure_layout(self):
-        return [
-            {"name": "Serve", "content": self.serve.proxy.url + "/predict"},
-            {"name": "API Testing", "content": self.serve.locust},
-        ]
+        return self.serve.configure_layout()
 
 
 app = LightningApp(RootFlow(), debug=True)
