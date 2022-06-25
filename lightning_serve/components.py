@@ -47,7 +47,7 @@ class Proxy(TracerPythonScript):
 
 class Locust(LightningWork):
     def __init__(self, num_users: int):
-        super().__init__(port=8089)
+        super().__init__(port=8089, parallel=True)
         self.num_users = num_users
 
     def run(self, host: str):
@@ -94,9 +94,6 @@ class ServeFlow(LightningFlow):
         if not self.proxy.has_started:
             self.proxy.run(strategy=self._strategy)
 
-        if self.proxy.alive():
-            self.locust.run(self.proxy.url)
-
         # Step 2: Compute a hash of the keyword arguments.
         call_hash = DeepHash(kwargs)[kwargs]
         if call_hash not in self.hashes:
@@ -111,3 +108,6 @@ class ServeFlow(LightningFlow):
             if (new_update_time - self._last_update_time) > self._router_refresh:
                 requests.post(self.proxy.url + PROXY_ENDPOINT, json=res)
                 self._last_update_time = new_update_time
+
+        if self.proxy.alive():
+            self.locust.run(self.proxy.url)
