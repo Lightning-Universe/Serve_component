@@ -2,3 +2,6 @@ lightning
 numpy
 prometheus-fastapi-instrumentator
 locust
+httpx
+gunicorn
+ujson

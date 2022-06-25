@@ -11,10 +11,9 @@ from lightning import LightningFlow
 from lightning.app import BuildConfig, LightningWork
 from lightning.app.components.python import TracerPythonScript
 from lightning.app.structures import List
-
+from lightning_serve.utils import _configure_session
 from lightning_serve.strategies import _STRATEGY_REGISTRY
 from lightning_serve.strategies.base import Strategy
-from lightning_serve.utils import get_url
 
 
 class ServeWork(TracerPythonScript):
@@ -29,8 +28,31 @@ class ServeWork(TracerPythonScript):
         return self.url != ""
 
 
+class ServeWork(LightningWork):
+    def __init__(self, *args, script_path: str, workers=8, **kwargs):
+        super().__init__(
+            *args,
+            parallel=True,
+            raise_exception=True,
+            **kwargs,
+        )
+        self.script_path = script_path
+        self.workers = workers
+
+    def run(self, random_kwargs="", **kwargs):
+        subprocess.run(
+            f"{sys.executable} -m gunicorn --workers {self.workers} -k uvicorn.workers.UvicornWorker serve:app -b {self.host}:{self.port}",
+            check=True,
+            shell=True,
+            env={"random_kwargs": random_kwargs}
+        )
+
+    def alive(self):
+        return self.url != ""
+
+
 class Proxy(LightningWork):
-    def __init__(self, *args, workers=4, **kwargs):
+    def __init__(self, *args, workers=8, **kwargs):
         super().__init__(
             *args,
             parallel=True,
@@ -45,7 +67,7 @@ class Proxy(LightningWork):
             pickle.dump(strategy, f)
 
         subprocess.run(
-            f"{sys.executable} -m uvicorn --workers {self.workers} proxy:app --host {self.host} --port {self.port}",
+            f"{sys.executable} -m gunicorn --workers {self.workers} -k uvicorn.workers.UvicornWorker proxy:app -b {self.host}:{self.port}",
             check=True,
             shell=True,
         )
@@ -54,27 +76,27 @@ class Proxy(LightningWork):
         return self.url != ""
 
 
-class Proxy(TracerPythonScript):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            parallel=True,
-            script_path=os.path.join(os.path.dirname(__file__), "proxy.py"),
-            raise_exception=True,
-            **kwargs,
-        )
-        self.routing = None
+# class Proxy(TracerPythonScript):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(
+#             *args,
+#             parallel=True,
+#             script_path=os.path.join(os.path.dirname(__file__), "proxy.py"),
+#             raise_exception=True,
+#             **kwargs,
+#         )
+#         self.routing = None
 
-    def run(self, strategy=None, **kwargs):
-        os.chdir(os.path.dirname(__file__))
-        with open("strategy.p", "wb") as f:
-            pickle.dump(strategy, f)
-        self.script_args += [f"--host={self.host}", f"--port={self.port}"]
-        print(self.script_args)
-        super().run(proxy=self, **kwargs)
+#     def run(self, strategy=None, **kwargs):
+#         os.chdir(os.path.dirname(__file__))
+#         with open("strategy.p", "wb") as f:
+#             pickle.dump(strategy, f)
+#         self.script_args += [f"--host={self.host}", f"--port={self.port}"]
+#         print(self.script_args)
+#         super().run(proxy=self, **kwargs)
 
-    def alive(self):
-        return self.url != ""
+#     def alive(self):
+#         return self.url != ""
 
 
 class PrometheusWork(LightningWork):
@@ -116,7 +138,7 @@ class GrafanaWork(LightningWork):
 
 class Locust(LightningWork):
     def __init__(self, num_users: int):
-        super().__init__(port=8089)
+        super().__init__(port=8089, parallel=True)
         self.num_users = num_users
 
     def run(self, host: str):
@@ -140,7 +162,7 @@ class ServeFlow(LightningFlow):
     def __init__(
         self,
         strategy: t.Union[Strategy, "str"],
-        router_refresh: int = 1,
+        router_refresh: int = 5,
         **work_kwargs,
     ):
         super().__init__()
@@ -155,7 +177,7 @@ class ServeFlow(LightningFlow):
         self.hashes = []
         self.proxy = Proxy()
         self._router_refresh = router_refresh
-        self._last_update_time = None
+        self._last_update_time = time()
         self.locust = Locust(100)
         # self.grafana = GrafanaWork()
         # self.prometheus = PrometheusWork()
@@ -164,8 +186,6 @@ class ServeFlow(LightningFlow):
         # # Step 1: Start the proxy
         if not self.proxy.has_started:
             self.proxy.run(strategy=self._strategy)
-        if self.proxy.alive():
-            self.locust.run(self.proxy.url)
 
         # Step 2: Compute a hash of the keyword arguments.
         call_hash = DeepHash(kwargs)[kwargs]
@@ -179,6 +199,9 @@ class ServeFlow(LightningFlow):
             res = self._strategy.run(self.serve_works)
             new_update_time = time()
             if (new_update_time - self._last_update_time) > self._router_refresh:
-                requests.post(self.proxy.url + "/api/v1/proxy", json=res)
+                _configure_session().post(self.proxy.url + "/api/v1/proxy", json=res)
                 self._last_update_time = new_update_time
                 self._strategy.on_after_run(self.serve_works, res)
+
+        if self.proxy.alive():
+            self.locust.run(self.proxy.url)

@@ -1,26 +1,32 @@
 import argparse
 
 from fastapi import FastAPI, Request
+from fastapi.responses import UJSONResponse
 from uvicorn import run
+import os
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--host", type=str)
-parser.add_argument("--port", type=int)
-hparams = parser.parse_args()
 
 app = FastAPI()
 
 
 @app.get("/predict")
 async def predict(request: Request):
-    print("HERE")
-    return globals()["random_kwargs"]
+    #await asyncio.sleep(np.random.uniform(0, .3))
+    return UJSONResponse(os.environ["random_kwargs"])
 
 
-print(f"Running on {hparams.host}:{hparams.port}")
+if __name__ == "__main__":
+    import argparse
 
-run(
-    app,
-    host=hparams.host.replace("http://", "").replace("https://", ""),
-    port=int(hparams.port),
-)
+    from uvicorn import run
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", type=str)
+    parser.add_argument("--port", type=int)
+    hparams = parser.parse_args()
+
+    run(
+        app,
+        host=hparams.host.replace("http://", "").replace("https://", ""),
+        port=int(hparams.port),
+    )

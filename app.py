@@ -18,7 +18,7 @@ class RootFlow(LightningFlow):
     def run(self):
         # Deploy a new server every time the provided input changes
         # and shutdown the previous server once the new one is ready.
-        self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H:%M"))
+        self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H"))
 
     def configure_layout(self):
         return [
