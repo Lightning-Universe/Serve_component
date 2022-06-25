@@ -1,13 +1,14 @@
 import os
+import subprocess
 import typing as t
 from time import time
 
 import requests
 from deepdiff import DeepHash
-
-from lightning import LightningFlow
+from lightning import LightningFlow, LightningWork
 from lightning.app.components.python import TracerPythonScript
 from lightning.app.structures import List
+
 from lightning_serve.proxy import PROXY_ENDPOINT
 from lightning_serve.strategies import _STRATEGY_REGISTRY
 from lightning_serve.strategies.base import Strategy
@@ -44,6 +45,28 @@ class Proxy(TracerPythonScript):
         return self.url != ""
 
 
+class Locust(LightningWork):
+    def __init__(self, num_users: int):
+        super().__init__(port=8089)
+        self.num_users = num_users
+
+    def run(self, host: str):
+        cmd = " ".join(
+            [
+                "locust",
+                "--master-host",
+                str(self.host),
+                "--master-port",
+                str(self.port),
+                "--host",
+                str(host),
+                "-u",
+                str(self.num_users),
+            ]
+        )
+        subprocess.Popen(cmd, shell=True).wait()
+
+
 class ServeFlow(LightningFlow):
     def __init__(
         self,
@@ -64,11 +87,15 @@ class ServeFlow(LightningFlow):
         self.proxy = Proxy()
         self._router_refresh = router_refresh
         self._last_update_time = time()
+        self.locust = Locust(100)
 
     def run(self, **kwargs):
         # Step 1: Start the proxy
         if not self.proxy.has_started:
             self.proxy.run(strategy=self._strategy)
+
+        if self.proxy.alive():
+            self.locust.run(self.proxy.url)
 
         # Step 2: Compute a hash of the keyword arguments.
         call_hash = DeepHash(kwargs)[kwargs]
