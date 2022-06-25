@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import pickle
 import subprocess
@@ -5,15 +6,15 @@ import sys
 import typing as t
 from time import time
 
-import requests
 from deepdiff import DeepHash
 from lightning import LightningFlow
 from lightning.app import BuildConfig, LightningWork
 from lightning.app.components.python import TracerPythonScript
 from lightning.app.structures import List
-from lightning_serve.utils import _configure_session
+
 from lightning_serve.strategies import _STRATEGY_REGISTRY
 from lightning_serve.strategies.base import Strategy
+from lightning_serve.utils import _configure_session
 
 
 class ServeWork(TracerPythonScript):
@@ -29,7 +30,7 @@ class ServeWork(TracerPythonScript):
 
 
 class ServeWork(LightningWork):
-    def __init__(self, *args, script_path: str, workers=8, **kwargs):
+    def __init__(self, *args, script_path: str, workers=None, **kwargs):
         super().__init__(
             *args,
             parallel=True,
@@ -37,14 +38,14 @@ class ServeWork(LightningWork):
             **kwargs,
         )
         self.script_path = script_path
-        self.workers = workers
+        self.workers = workers or int(multiprocessing.cpu_count() / 2)
 
     def run(self, random_kwargs="", **kwargs):
         subprocess.run(
             f"{sys.executable} -m gunicorn --workers {self.workers} -k uvicorn.workers.UvicornWorker serve:app -b {self.host}:{self.port}",
             check=True,
             shell=True,
-            env={"random_kwargs": random_kwargs}
+            env={"random_kwargs": random_kwargs},
         )
 
     def alive(self):
@@ -52,14 +53,14 @@ class ServeWork(LightningWork):
 
 
 class Proxy(LightningWork):
-    def __init__(self, *args, workers=8, **kwargs):
+    def __init__(self, *args, workers=None, **kwargs):
         super().__init__(
             *args,
             parallel=True,
             raise_exception=True,
             **kwargs,
         )
-        self.workers = workers
+        self.workers = workers or int(multiprocessing.cpu_count() / 2)
 
     def run(self, strategy=None, **kwargs):
         os.chdir(os.path.dirname(__file__))

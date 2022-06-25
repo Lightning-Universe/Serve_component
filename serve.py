@@ -1,17 +1,16 @@
 import argparse
+import os
 
 from fastapi import FastAPI, Request
 from fastapi.responses import UJSONResponse
 from uvicorn import run
-import os
-
 
 app = FastAPI()
 
 
 @app.get("/predict")
 async def predict(request: Request):
-    #await asyncio.sleep(np.random.uniform(0, .3))
+    # await asyncio.sleep(np.random.uniform(0, .3))
     return UJSONResponse(os.environ["random_kwargs"])
 
 

@@ -1,6 +1,7 @@
-from lightning.app import LightningWork
 from typing import Optional
+
 import requests
+from lightning.app import LightningWork
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry

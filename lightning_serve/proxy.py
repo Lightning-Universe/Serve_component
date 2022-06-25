@@ -3,9 +3,9 @@ import pickle
 from copy import deepcopy
 
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import UJSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.concurrency import run_in_threadpool
-from fastapi.responses import UJSONResponse
 
 PROXY_ENDPOINT = "/api/v1/proxy"
 
@@ -16,7 +16,7 @@ proxy_metadata = None
 with open("strategy.p", "rb") as f:
     strategy = pickle.load(f)
 
-#Instrumentator().instrument(app).expose(app)
+# Instrumentator().instrument(app).expose(app)
 
 
 @app.post(PROXY_ENDPOINT)
