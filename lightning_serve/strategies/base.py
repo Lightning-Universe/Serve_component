@@ -4,10 +4,9 @@ from typing import Any
 import numpy as np
 import requests
 from fastapi import Request
-from requests import Response
-
 from lightning import LightningWork
 from lightning.app.structures import List
+from requests import Response
 
 
 class Strategy(abc.ABC):
@@ -28,4 +27,7 @@ class Strategy(abc.ABC):
 
     @abc.abstractmethod
     def run(self, serve_works: List[LightningWork]) -> Any:
+        pass
+
+    def on_after_run(self, serve_works: List[LightningWork], res):
         pass

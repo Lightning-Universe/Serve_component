@@ -5,11 +5,12 @@ from typing import Any
 
 import requests
 from fastapi import Request
-from requests import Response
-
 from lightning import LightningWork
 from lightning.app.structures import List
+from requests import Response
+
 from lightning_serve.strategies.base import Strategy
+from lightning_serve.utils import get_url
 
 
 class ShadowStrategy(Strategy):
@@ -49,9 +50,9 @@ class ShadowStrategy(Strategy):
 
     def run(self, serve_works: List[LightningWork]):
         if len(serve_works) == 1:
-            return {serve_works[-1].url: 1.0}
+            return {get_url(serve_works[-1]): 1.0}
 
         for w in serve_works[:-2]:
             w.stop()
 
-        return [w.url for w in serve_works[-2:]]
+        return [get_url(w) for w in serve_works[-2:]]

@@ -1,8 +1,9 @@
 from time import time
 
-from lightning import LightningWork
 from lightning.app.structures import List
+
 from lightning_serve.strategies.base import Strategy
+from lightning_serve.utils import get_url
 
 
 class RampedStrategy(Strategy):
@@ -15,7 +16,7 @@ class RampedStrategy(Strategy):
     def run(self, serve_works: List["LightningWork"]):
         # Step 1: Get ready time for each work.
         if len(serve_works) == 1:
-            return {serve_works[-1].url: 1.0}
+            return {get_url(serve_works[-1]): 1.0}
 
         # Step 2: Compute the current ramped score to transfer requests load.
         current_time = time()
@@ -23,24 +24,24 @@ class RampedStrategy(Strategy):
         running_serve_works = [
             w
             for w in serve_works[:-1]
-            if (w.url in self.ramped_scores and self.ramped_scores[w.url]) > 0
-            or w.url not in self.ramped_scores
+            if (get_url(w) in self.ramped_scores and self.ramped_scores[get_url(w)]) > 0
+            or get_url(w) not in self.ramped_scores
         ]
         for w in running_serve_works:
-            if w.url not in self.serve_works_ramped_time:
-                self.serve_works_ramped_time[w.url] = current_time
-                self.ramped_scores[w.url] = 1.0
+            if get_url(w) not in self.serve_works_ramped_time:
+                self.serve_works_ramped_time[get_url(w)] = current_time
+                self.ramped_scores[get_url(w)] = 1.0
 
-            time_left = current_time - self.serve_works_ramped_time[w.url]
+            time_left = current_time - self.serve_works_ramped_time[get_url(w)]
             if time_left < self.transition_time_in_seconds:
                 ramped_score = (self.transition_time_in_seconds - time_left) / (
                     self.transition_time_in_seconds * len(running_serve_works)
                 )
-                self.ramped_scores[w.url] = ramped_score
+                self.ramped_scores[get_url(w)] = ramped_score
                 total_ramped_score += ramped_score
 
             else:
-                self.ramped_scores[w.url] = 0
+                self.ramped_scores[get_url(w)] = 0
 
-        self.ramped_scores[serve_works[-1].url] = 1.0 - total_ramped_score
+        self.ramped_scores[get_url(serve_works[-1])] = 1.0 - total_ramped_score
         return {k: v for k, v in self.ramped_scores.items() if v > 0}
