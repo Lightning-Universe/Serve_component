@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 
 from lightning import LightningApp, LightningFlow
@@ -12,20 +11,16 @@ class RootFlow(LightningFlow):
 
         self.serve = ServeFlow(
             strategy="blue_green",
-            script_path=os.path.join(os.path.dirname(__file__), "./serve.py"),
+            script_path="./scripts/serve.py",
         )
 
     def run(self):
         # Deploy a new server every time the provided input changes
         # and shutdown the previous server once the new one is ready.
-        self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H"))
+        self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H:%M"))
 
     def configure_layout(self):
-        return [
-            {"name": "Serve", "content": self.serve.proxy.url + "/predict"},
-            {"name": "Metrics", "content": self.serve.proxy.url + "/metrics"},
-            {"name": "Locust", "content": self.serve.locust},
-        ]
+        return self.serve.configure_layout()
 
 
 app = LightningApp(RootFlow(), debug=True)

@@ -9,7 +9,7 @@ app = FastAPI()
 
 
 @app.get("/predict")
-async def predict(request: Request):
+def predict(request: Request):
     # await asyncio.sleep(np.random.uniform(0, .3))
     return UJSONResponse(os.environ["random_kwargs"])
 

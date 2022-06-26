@@ -15,6 +15,6 @@ class BlueGreenStrategy(Strategy):
         return {get_url(serve_works[-2]): 1.0}
 
     def on_after_run(self, serve_works: List[LightningWork], res):
-        if get_url(serve_works[-1]) in res:
-            for serve_work in serve_works[:-1]:
-                serve_work.stop()
+        for serve_work in serve_works[:-1]:
+            serve_work.stop()
+            print(f"Killing the server {serve_work.name}")

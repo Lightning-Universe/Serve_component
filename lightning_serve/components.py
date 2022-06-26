@@ -11,10 +11,10 @@ from lightning import LightningFlow
 from lightning.app import BuildConfig, LightningWork
 from lightning.app.components.python import TracerPythonScript
 from lightning.app.structures import List
-
+import gunicorn
 from lightning_serve.strategies import _STRATEGY_REGISTRY
 from lightning_serve.strategies.base import Strategy
-from lightning_serve.utils import _configure_session
+from lightning_serve.utils import _configure_session, get_url
 
 
 class ServeWork(TracerPythonScript):
@@ -39,9 +39,10 @@ class ServeWork(LightningWork):
         )
         self.script_path = script_path
         self.workers = workers or int(multiprocessing.cpu_count() / 2)
+        self._process = None
 
     def run(self, random_kwargs="", **kwargs):
-        subprocess.run(
+        self._process = subprocess.run(
             f"{sys.executable} -m gunicorn --workers {self.workers} -k uvicorn.workers.UvicornWorker serve:app -b {self.host}:{self.port}",
             check=True,
             shell=True,
@@ -67,6 +68,12 @@ class Proxy(LightningWork):
         with open("strategy.p", "wb") as f:
             pickle.dump(strategy, f)
 
+        # subprocess.run(
+        #     f"{sys.executable} -m uvicorn --workers {self.workers} proxy:app --host {self.host} --port {self.port}",
+        #     check=True,
+        #     shell=True,
+        # )
+
         subprocess.run(
             f"{sys.executable} -m gunicorn --workers {self.workers} -k uvicorn.workers.UvicornWorker proxy:app -b {self.host}:{self.port}",
             check=True,
@@ -87,6 +94,7 @@ class Proxy(LightningWork):
 #             **kwargs,
 #         )
 #         self.routing = None
+#         self.workers = 1
 
 #     def run(self, strategy=None, **kwargs):
 #         os.chdir(os.path.dirname(__file__))
@@ -163,7 +171,7 @@ class ServeFlow(LightningFlow):
     def __init__(
         self,
         strategy: t.Union[Strategy, "str"],
-        router_refresh: int = 5,
+        router_refresh: int = 1,
         **work_kwargs,
     ):
         super().__init__()
@@ -178,8 +186,11 @@ class ServeFlow(LightningFlow):
         self.hashes = []
         self.proxy = Proxy()
         self._router_refresh = router_refresh
+        self._strategy_run_after = 5
         self._last_update_time = time()
         self.locust = Locust(100)
+        self._previous_hash = None
+        self._has_run_after = False
         # self.grafana = GrafanaWork()
         # self.prometheus = PrometheusWork()
 
@@ -196,13 +207,30 @@ class ServeFlow(LightningFlow):
             self.serve_works.append(serve_work)
             serve_work.run(**kwargs)
 
-        if self.proxy.alive() and self.serve_works[-1].alive():
+        if self.proxy.url != "":
             res = self._strategy.run(self.serve_works)
+            res_hash = DeepHash(res)[res]
             new_update_time = time()
-            if (new_update_time - self._last_update_time) > self._router_refresh:
-                _configure_session().post(self.proxy.url + "/api/v1/proxy", json=res)
+            if res_hash == self._previous_hash:
+                if self._has_run_after:
+                    return
+                if (new_update_time - self._last_update_time) > self._strategy_run_after:
+                    self._strategy.on_after_run(self.serve_works, res)
+                    self._has_run_after = True
+            elif (new_update_time - self._last_update_time) > self._router_refresh:
+                # Send a burst of requests to update with the new information.
+                for _ in range(self.proxy.workers * 50):
+                    _configure_session().post(self.proxy.url + "/api/v1/proxy", json=res)
                 self._last_update_time = new_update_time
-                self._strategy.on_after_run(self.serve_works, res)
+                self._previous_hash = res_hash
+                self._has_run_after = False
 
         if self.proxy.alive():
             self.locust.run(self.proxy.url)
+
+    def configure_layout(self):
+        proxy_url = self.proxy.url + "/predict" if self._previous_hash else ""
+        return [
+            {"name": "Serve", "content": proxy_url},
+            {"name": "API Testing", "content": self.locust},
+        ]
