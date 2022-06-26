@@ -1,12 +1,13 @@
-from typing import Optional
 import asyncio
-import requests
 import logging
+from typing import Optional
+
+import requests
 from lightning.app import LightningWork
+from lightning.app.utilities.exceptions import CacheMissException
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from lightning.app.utilities.exceptions import CacheMissException
 
 logger = logging.getLogger(__name__)
 

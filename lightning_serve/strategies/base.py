@@ -2,16 +2,16 @@ import abc
 from typing import Any
 
 import numpy as np
+import requests
 from fastapi import Request
 from lightning import LightningWork
 from lightning.app.structures import List
 from requests import Response
+
 from lightning_serve.utils import _configure_session
-import requests
 
 
 class Strategy(abc.ABC):
-
     def __init__(self):
         self._session = None
 

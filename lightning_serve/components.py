@@ -6,12 +6,13 @@ import sys
 import typing as t
 from time import time
 
+import gunicorn
 from deepdiff import DeepHash
 from lightning import LightningFlow
 from lightning.app import BuildConfig, LightningWork
 from lightning.app.components.python import TracerPythonScript
 from lightning.app.structures import List
-import gunicorn
+
 from lightning_serve.strategies import _STRATEGY_REGISTRY
 from lightning_serve.strategies.base import Strategy
 from lightning_serve.utils import _configure_session, get_url
@@ -214,13 +215,17 @@ class ServeFlow(LightningFlow):
             if res_hash == self._previous_hash:
                 if self._has_run_after:
                     return
-                if (new_update_time - self._last_update_time) > self._strategy_run_after:
+                if (
+                    new_update_time - self._last_update_time
+                ) > self._strategy_run_after:
                     self._strategy.on_after_run(self.serve_works, res)
                     self._has_run_after = True
             elif (new_update_time - self._last_update_time) > self._router_refresh:
                 # Send a burst of requests to update with the new information.
                 for _ in range(self.proxy.workers * 50):
-                    _configure_session().post(self.proxy.url + "/api/v1/proxy", json=res)
+                    _configure_session().post(
+                        self.proxy.url + "/api/v1/proxy", json=res
+                    )
                 self._last_update_time = new_update_time
                 self._previous_hash = res_hash
                 self._has_run_after = False
