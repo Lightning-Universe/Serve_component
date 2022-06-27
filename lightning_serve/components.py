@@ -31,7 +31,7 @@ class ServeWork(TracerPythonScript):
 
 
 class ServeWork(LightningWork):
-    def __init__(self, *args, script_path: str, workers=None, **kwargs):
+    def __init__(self, *args, script_path: str, workers=6, **kwargs):
         super().__init__(
             *args,
             parallel=True,
@@ -55,7 +55,7 @@ class ServeWork(LightningWork):
 
 
 class Proxy(LightningWork):
-    def __init__(self, *args, workers=None, **kwargs):
+    def __init__(self, *args, workers=6, **kwargs):
         super().__init__(
             *args,
             parallel=True,
@@ -183,15 +183,17 @@ class ServeFlow(LightningFlow):
             if isinstance(strategy, Strategy)
             else _STRATEGY_REGISTRY[strategy]()
         )
-        self.serve_works = List()
+        self.ws = List()
         self.hashes = []
         self.proxy = Proxy()
         self._router_refresh = router_refresh
-        self._strategy_run_after = 5
+        self._strategy_run_after = 10
         self._last_update_time = time()
         self.locust = Locust(100)
         self._previous_hash = None
         self._has_run_after = False
+        self._warmup_steps = 0
+        self._warmup_steps_limit = 20
         # self.grafana = GrafanaWork()
         # self.prometheus = PrometheusWork()
 
@@ -205,36 +207,48 @@ class ServeFlow(LightningFlow):
         if call_hash not in self.hashes:
             serve_work = self._work_cls(**(self._work_kwargs or {}))
             self.hashes.append(call_hash)
-            self.serve_works.append(serve_work)
+            self.ws.append(serve_work)
             serve_work.run(**kwargs)
 
         if self.proxy.url != "":
-            res = self._strategy.run(self.serve_works)
-            res_hash = DeepHash(res)[res]
+            res = self._strategy.run(self.ws)
             new_update_time = time()
-            if res_hash == self._previous_hash:
-                if self._has_run_after:
-                    return
-                if (
-                    new_update_time - self._last_update_time
-                ) > self._strategy_run_after:
-                    self._strategy.on_after_run(self.serve_works, res)
-                    self._has_run_after = True
-            elif (new_update_time - self._last_update_time) > self._router_refresh:
-                # Send a burst of requests to update with the new information.
-                for _ in range(self.proxy.workers * 50):
-                    _configure_session().post(
-                        self.proxy.url + "/api/v1/proxy", json=res
-                    )
-                self._last_update_time = new_update_time
-                self._previous_hash = res_hash
-                self._has_run_after = False
+            if self._warmup_steps <= self._warmup_steps_limit:
+                if (new_update_time - self._last_update_time) > self._router_refresh:
+                    print(f"[WARMUP] Refresh proxy: {len(self.ws)} server(s).")
+                    # Send a burst of requests to update with the new information.
+                    for _ in range(self.proxy.workers * 20):
+                        _configure_session().post(
+                            self.proxy.url + "/api/v1/proxy", json=res
+                        )
+                    self._last_update_time = new_update_time
+                    self._warmup_steps += 1
+            else:
+                res_hash = DeepHash(res)[res]
+                if res_hash == self._previous_hash:
+                    if self._has_run_after:
+                        return
+                    if self.ws[-1].alive() and (
+                        new_update_time - self._last_update_time
+                    ) > self._strategy_run_after:
+                        self._strategy.on_after_run(self.ws, res)
+                        self._has_run_after = True
+                elif (new_update_time - self._last_update_time) > self._router_refresh:
+                    # Send a burst of requests to update with the new information.
+                    print(f"Refresh proxy: {len(self.ws)} server(s).")
+                    for _ in range(self.proxy.workers * 20):
+                        _configure_session().post(
+                            self.proxy.url + "/api/v1/proxy", json=res
+                        )
+                    self._last_update_time = new_update_time
+                    self._previous_hash = res_hash
+                    self._has_run_after = False
 
         if self.proxy.alive():
             self.locust.run(self.proxy.url)
 
     def configure_layout(self):
-        proxy_url = self.proxy.url + "/predict" if self._previous_hash else ""
+        proxy_url = self.proxy.url + "/predict" if self._warmup_steps >= self._warmup_steps_limit else ""
         return [
             {"name": "Serve", "content": proxy_url},
             {"name": "API Testing", "content": self.locust},
