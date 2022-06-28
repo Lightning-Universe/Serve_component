@@ -7,14 +7,14 @@ from lightning.app.storage import Path
 
 class MLServer(LightningWork):
     def __init__(self, name: str, implementation: str, workers: int = 1, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(parallel=True, **kwargs)
         self.settings = {
             "debug": True,
+            "parallel_workers": workers,
         }
         self.model_settings = {
             "name": name,
             "implementation": implementation,
-            "parallel_workers": workers,
         }
         self.version = 1
 
@@ -28,7 +28,7 @@ class MLServer(LightningWork):
             "version": f"v0.0.{self.version}",
             "uri": str(model_path.absolute()),
         }
-        with open("model_settings.json", "w") as f:
+        with open("model-settings.json", "w") as f:
             json.dump(self.model_settings, f)
 
         subprocess.Popen("mlserver start .", shell=True).wait()

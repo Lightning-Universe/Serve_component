@@ -43,9 +43,7 @@ class TrainAndDeploy(LightningFlow):
     def __init__(self):
         super().__init__()
         self.train = TrainWork()
-        self.serve = MLServer(
-            "mnist-svm", "mlserver_sklearn.SKLearnModel", workers=4, parallel=True
-        )
+        self.serve = MLServer("mnist-svm", "mlserver_sklearn.SKLearnModel", workers=8)
         self.locust = Locust(100)
 
     def run(self):

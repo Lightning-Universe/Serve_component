@@ -1,0 +1,1 @@
+{"name": "mnist-svm", "implementation": "mlserver_sklearn.SKLearnModel", "parameters": {"version": "v0.0.1", "uri": "/Users/thomas/Documents/GitHub/lightning-serve/examples/mlserver/mnist-svm.joblib"}}
