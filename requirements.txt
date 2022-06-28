@@ -6,3 +6,4 @@ httpx
 gunicorn
 ujson
 uvloop
+mlserver

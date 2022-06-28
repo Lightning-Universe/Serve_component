@@ -6,7 +6,6 @@ import sys
 import typing as t
 from time import time
 
-import gunicorn
 from deepdiff import DeepHash
 from lightning import LightningFlow
 from lightning.app import BuildConfig, LightningWork
@@ -15,7 +14,7 @@ from lightning.app.structures import List
 
 from lightning_serve.strategies import _STRATEGY_REGISTRY
 from lightning_serve.strategies.base import Strategy
-from lightning_serve.utils import _configure_session, get_url
+from lightning_serve.utils import _configure_session
 
 
 class ServeWork(TracerPythonScript):
@@ -135,7 +134,7 @@ class GrafanaWork(LightningWork):
         subprocess.run(
             [
                 "/bin/bash",
-                "./grafana.sh",
+                "./run.sh",
             ],
             check=True,
             env={
@@ -228,9 +227,11 @@ class ServeFlow(LightningFlow):
                 if res_hash == self._previous_hash:
                     if self._has_run_after:
                         return
-                    if self.ws[-1].alive() and (
-                        new_update_time - self._last_update_time
-                    ) > self._strategy_run_after:
+                    if (
+                        self.ws[-1].alive()
+                        and (new_update_time - self._last_update_time)
+                        > self._strategy_run_after
+                    ):
                         self._strategy.on_after_run(self.ws, res)
                         self._has_run_after = True
                 elif (new_update_time - self._last_update_time) > self._router_refresh:
@@ -248,7 +249,11 @@ class ServeFlow(LightningFlow):
             self.locust.run(self.proxy.url)
 
     def configure_layout(self):
-        proxy_url = self.proxy.url + "/predict" if self._warmup_steps >= self._warmup_steps_limit else ""
+        proxy_url = (
+            self.proxy.url + "/predict"
+            if self._warmup_steps >= self._warmup_steps_limit
+            else ""
+        )
         return [
             {"name": "Serve", "content": proxy_url},
             {"name": "API Testing", "content": self.locust},
