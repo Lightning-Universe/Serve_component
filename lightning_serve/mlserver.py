@@ -32,3 +32,6 @@ class MLServer(LightningWork):
             json.dump(self.model_settings, f)
 
         subprocess.Popen("mlserver start .", shell=True).wait()
+
+    def alive(self):
+        return self.url != ""

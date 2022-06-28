@@ -49,7 +49,7 @@ class TrainAndDeploy(LightningFlow):
     def run(self):
         self.train.run()
         self.serve.run(self.train.best_model_path)
-        if self.serve.url != "":
+        if self.serve.alive():
             self.locust.run(self.serve.url)
 
     def configure_layout(self):
