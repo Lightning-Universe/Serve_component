@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from lightning import LightningApp, LightningFlow
 
@@ -13,11 +13,18 @@ class RootFlow(LightningFlow):
             strategy="blue_green_v2",
             script_path="./scripts/serve.py",
         )
+        self._current_deploy_date = None
+        self._next_deploy_date = None
 
     def run(self):
-        # Deploy a new server every time the provided input changes
-        # and shutdown the previous server once the new one is ready.
-        self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H:%M"))
+        now = datetime.now()
+        if self._next_deploy_date is None or now > self._next_deploy_date:
+            self._current_deploy_date = now
+            self._next_deploy_date = now + timedelta(seconds=30)
+
+        self.serve.run(
+            random_kwargs=self._current_deploy_date.strftime("%m/%d/%Y %H:%M:%S")
+        )
 
     def configure_layout(self):
         return self.serve.configure_layout()

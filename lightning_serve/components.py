@@ -85,20 +85,13 @@ class Proxy(LightningWork):
 
 
 class GinProxyBuildConfig(BuildConfig):
-
     def build_commands(self):
         return [
             "wget -c https://golang.org/dl/go1.18.1.linux-amd64.tar.gz",
-            "sudo tar -C /usr/local -xvzf go1.15.2.linux-amd64.tar.gz",
-            "mkdir -p ~/go_projects/{bin,src,pkg}",
-            "cd ~/go_projects",
-            "export  PATH=$PATH:/usr/local/go/bin",
-            'export GOPATH="$HOME/go_projects"',
-            'export GOBIN="$GOPATH/bin"',
-            'export GOROOT=$HOME/go',
-            'export PATH=$PATH:$GOROOT/bin',
-
+            "sudo tar -C /usr/local -xvzf go1.18.1.linux-amd64.tar.gz",
         ]
+
+
 class GinProxy(LightningWork):
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -106,20 +99,20 @@ class GinProxy(LightningWork):
             parallel=True,
             raise_exception=True,
             **kwargs,
-            cloud_build_config=GinProxyBuildConfig()
+            cloud_build_config=GinProxyBuildConfig(),
         )
         self.workers = 1
 
     def run(self, strategy=None, **kwargs):
         subprocess.run(
-            f"go get .",
+            f"PATH=$PATH:/usr/local/go/bin go get .",
             check=True,
             shell=True,
             cwd=os.path.join(os.path.dirname(__file__), "reverse_proxy"),
         )
 
         subprocess.run(
-            f"go run main.go --host {self.host} --port {self.port}",
+            f"PATH=$PATH:/usr/local/go/bin go run main.go --host {self.host} --port {self.port}",
             check=True,
             shell=True,
             cwd=os.path.join(os.path.dirname(__file__), "reverse_proxy"),
@@ -190,6 +183,22 @@ class GrafanaWork(LightningWork):
         )
 
 
+class ApacheHTTPServerBenchmarkingBuildConfig(BuildConfig):
+    def build_commands(self):
+        return ["sudo apt-get install -y apache2-utils"]
+
+
+class ApacheHTTPServerBenchmarking(LightningWork):
+    def __init__(self):
+        super().__init__(
+            cloud_build_config=ApacheHTTPServerBenchmarkingBuildConfig(), parallel=True
+        )
+
+    def run(self, host: str):
+        cmd = f'ab -n 10000 -c 1 -p payload.json -T "application/json" {host}/predict'
+        subprocess.Popen(cmd, shell=True).wait()
+
+
 class Locust(LightningWork):
     def __init__(self, num_users: int):
         super().__init__(port=8089, parallel=True)
@@ -223,8 +232,9 @@ class ServeFlow(LightningFlow):
         self._work_cls = ServeWork
         self._work_kwargs = work_kwargs
         self.proxy = GinProxy() if strategy == "blue_green_v2" else Proxy()
-        self._warmup_steps_limit = 1 if strategy == "blue_green_v2" else 20
+        self._warmup_steps_limit = 0 if strategy == "blue_green_v2" else 20
         self._multiplier = 1 if strategy == "blue_green_v2" else self.proxy.workers * 20
+        self.performance_tester = ApacheHTTPServerBenchmarking() if strategy == "blue_green_v2" else Locust(100)
         self._strategy = (
             strategy
             if isinstance(strategy, Strategy)
@@ -235,7 +245,6 @@ class ServeFlow(LightningFlow):
         self._router_refresh = router_refresh
         self._strategy_run_after = 10
         self._last_update_time = time()
-        self.locust = Locust(100)
         self._previous_hash = None
         self._has_run_after = False
         self._warmup_steps = 0
@@ -278,7 +287,7 @@ class ServeFlow(LightningFlow):
                     ):
                         self._strategy.on_after_run(self.ws, res)
                         self._has_run_after = True
-                elif (new_update_time - self._last_update_time) > self._router_refresh:
+                else:
                     # Send a burst of requests to update with the new information.
                     print(f"Refresh proxy: {len(self.ws)} server(s).")
                     for _ in range(self._multiplier):
@@ -290,7 +299,7 @@ class ServeFlow(LightningFlow):
                     self._has_run_after = False
 
         if self.proxy.alive():
-            self.locust.run(self.proxy.url)
+            self.performance_tester.run(self.proxy.url)
 
     def configure_layout(self):
         proxy_url = (
@@ -300,5 +309,5 @@ class ServeFlow(LightningFlow):
         )
         return [
             {"name": "Serve", "content": proxy_url},
-            {"name": "API Testing", "content": self.locust},
+            {"name": "API Testing", "content": self.performance_tester},
         ]

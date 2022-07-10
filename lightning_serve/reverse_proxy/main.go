@@ -70,6 +70,8 @@ func proxyFunc(c *gin.Context) {
 		} else if len(routing) > 0 {
 			Body, _ = handleRouting(c, proxyPath)
 		}
+		fmt.Println(routing)
+		fmt.Println(Body)
 		result <- Body
 
 	}(c.Copy())

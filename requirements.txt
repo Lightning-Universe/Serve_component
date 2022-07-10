@@ -7,3 +7,6 @@ gunicorn
 ujson
 uvloop
 mlserver
+torch
+pillow
+torchvision

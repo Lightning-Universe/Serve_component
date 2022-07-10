@@ -1,5 +1,6 @@
 include *.py
 include *.txt
+recursive-include lightning_serve/reverse_proxy *
 exclude *.lightning
 exclude *.lightningignore
 exclude .pre-commit-config.yaml
