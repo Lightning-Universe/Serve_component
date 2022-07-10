@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -29,7 +28,6 @@ func handleRouting(c *gin.Context, p string) (interface{}, error) {
 		choices := make([]randutil.Choice, 0, len(router))
 		for prob, urls := range router {
 			prob, _ := strconv.Atoi(prob)
-			log.Println(prob)
 			choice := randutil.Choice{
 				Weight: int(prob),
 				Item:   urls,
