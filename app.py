@@ -20,7 +20,7 @@ class RootFlow(LightningFlow):
         now = datetime.now()
         if self._next_deploy_date is None or now > self._next_deploy_date:
             self._current_deploy_date = now
-            self._next_deploy_date = now + timedelta(seconds=30)
+            self._next_deploy_date = now + timedelta(minutes=2)
 
         self.serve.run(
             random_kwargs=self._current_deploy_date.strftime("%m/%d/%Y %H:%M:%S")

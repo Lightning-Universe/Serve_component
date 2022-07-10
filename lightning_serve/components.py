@@ -234,7 +234,11 @@ class ServeFlow(LightningFlow):
         self.proxy = GinProxy() if strategy == "blue_green_v2" else Proxy()
         self._warmup_steps_limit = 0 if strategy == "blue_green_v2" else 20
         self._multiplier = 1 if strategy == "blue_green_v2" else self.proxy.workers * 20
-        self.performance_tester = ApacheHTTPServerBenchmarking() if strategy == "blue_green_v2" else Locust(100)
+        self.performance_tester = (
+            ApacheHTTPServerBenchmarking()
+            if strategy == "blue_green_v2"
+            else Locust(100)
+        )
         self._strategy = (
             strategy
             if isinstance(strategy, Strategy)
