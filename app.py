@@ -1,14 +1,16 @@
-from lightning import LightningFlow, LightningApp
-from lightning_serve import ServeFlow
 from datetime import datetime
 
-class RootFlow(LightningFlow):
+from lightning import LightningApp, LightningFlow
 
+from lightning_serve import ServeFlow
+
+
+class RootFlow(LightningFlow):
     def __init__(self):
         super().__init__()
 
         self.serve = ServeFlow(
-            strategy="shadow",
+            strategy="blue_green_v2",
             script_path="./scripts/serve.py",
         )
 
@@ -18,6 +20,7 @@ class RootFlow(LightningFlow):
         self.serve.run(random_kwargs=datetime.now().strftime("%m/%d/%Y, %H:%M"))
 
     def configure_layout(self):
-        return {"name": "Serve", "content": self.serve.proxy.url + "/predict"}
+        return self.serve.configure_layout()
+
 
 app = LightningApp(RootFlow(), debug=True)

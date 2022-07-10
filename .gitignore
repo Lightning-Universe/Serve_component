@@ -154,3 +154,4 @@ lightning/components/*
 train_script.py
 *return_values*
 scratch
+strategy.p

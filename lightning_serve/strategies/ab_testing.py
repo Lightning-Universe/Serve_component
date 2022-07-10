@@ -1,11 +1,12 @@
 from typing import Any
 
 from fastapi import Request
-from requests import Response
-
 from lightning import LightningWork
 from lightning.app.structures import List
+from requests import Response
+
 from lightning_serve.strategies.base import Strategy
+from lightning_serve.utils import get_url
 
 
 class ABTestingStrategy(Strategy):
@@ -26,10 +27,10 @@ class ABTestingStrategy(Strategy):
 
     def run(self, serve_works: List[LightningWork]):
         if len(serve_works) < 2:
-            return {w.url: 1.0 for w in serve_works}
+            return {get_url(w): 1.0 for w in serve_works}
 
         if self.method == "weighted":
-            works = [w for w in serve_works if w.url != ""]
-            return {w.url: 1.0 / len(works) for w in works}
+            works = [w for w in serve_works if get_url(w) != ""]
+            return {get_url(w): 1.0 / len(works) for w in works}
         else:
             raise NotImplementedError
