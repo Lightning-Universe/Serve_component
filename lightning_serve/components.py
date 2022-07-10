@@ -84,6 +84,21 @@ class Proxy(LightningWork):
         return self.url != ""
 
 
+class GinProxyBuildConfig(BuildConfig):
+
+    def build_commands(self):
+        return [
+            "wget -c https://golang.org/dl/go1.18.1.linux-amd64.tar.gz",
+            "sudo tar -C /usr/local -xvzf go1.15.2.linux-amd64.tar.gz",
+            "mkdir -p ~/go_projects/{bin,src,pkg}",
+            "cd ~/go_projects",
+            "export  PATH=$PATH:/usr/local/go/bin",
+            'export GOPATH="$HOME/go_projects"',
+            'export GOBIN="$GOPATH/bin"',
+            'export GOROOT=$HOME/go',
+            'export PATH=$PATH:$GOROOT/bin',
+
+        ]
 class GinProxy(LightningWork):
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -91,10 +106,18 @@ class GinProxy(LightningWork):
             parallel=True,
             raise_exception=True,
             **kwargs,
+            cloud_build_config=GinProxyBuildConfig()
         )
         self.workers = 1
 
     def run(self, strategy=None, **kwargs):
+        subprocess.run(
+            f"go get .",
+            check=True,
+            shell=True,
+            cwd=os.path.join(os.path.dirname(__file__), "reverse_proxy"),
+        )
+
         subprocess.run(
             f"go run main.go --host {self.host} --port {self.port}",
             check=True,

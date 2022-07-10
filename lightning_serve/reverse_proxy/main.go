@@ -44,15 +44,15 @@ func handleRouting(c *gin.Context, p string) (interface{}, error) {
 				if err != nil {
 					return "failed", err
 				}
-				body, _ := ioutil.ReadAll(resp.Body)
-				return string(body), nil
+				body, err := ioutil.ReadAll(resp.Body)
+				return string(body), err
 			} else {
 				resp, err := http.Post(url+p, c.GetHeader("Content-Type"), c.Request.Body)
 				if err != nil {
 					return "failed", err
 				}
-				body, _ := ioutil.ReadAll(resp.Body)
-				return string(body), nil
+				body, err := ioutil.ReadAll(resp.Body)
+				return string(body), err
 			}
 		}
 	}
@@ -61,7 +61,6 @@ func handleRouting(c *gin.Context, p string) (interface{}, error) {
 
 func proxyFunc(c *gin.Context) {
 	result := make(chan interface{})
-	// Start a Go
 	go func(c *gin.Context) {
 		proxyPath := c.Param("proxyPath")
 
@@ -81,8 +80,7 @@ func main() {
 	host := flag.String("host", "0.0.0.0", "Address of the server")
 	port := flag.String("port", "8000", "Port of the server")
 	flag.Parse()
-	server := fmt.Sprintf("%s:%s", *host, *port)
 	r := gin.Default()
 	r.Any("/*proxyPath", proxyFunc)
-	r.Run(server)
+	r.Run(fmt.Sprintf("%s:%s", *host, *port))
 }
