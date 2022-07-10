@@ -2,7 +2,6 @@ import abc
 from typing import Any
 
 import numpy as np
-import requests
 from fastapi import Request
 from lightning import LightningWork
 from lightning.app.structures import List
@@ -27,14 +26,19 @@ class Strategy(abc.ABC):
         return selected_url, method
 
     def make_request(
-        self, request: Request, full_path: str, local_router_metadata: Any
+        self, request: Request, full_path: str, local_router_metadata: Any, payload
     ) -> Response:
 
         if self._session is None:
             self._session = _configure_session()
 
         selected_url, method = self.select_url(request, local_router_metadata)
-        return getattr(self._session, method)(selected_url + "/" + full_path)
+        if method == "post":
+            return getattr(self._session, method)(
+                selected_url + "/" + full_path, json=payload
+            )
+        else:
+            return getattr(self._session, method)(selected_url + "/" + full_path)
 
     @abc.abstractmethod
     def run(self, serve_works: List[LightningWork]) -> Any:

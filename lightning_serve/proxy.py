@@ -1,7 +1,7 @@
 import asyncio
 import pickle
 
-from fastapi import FastAPI, Request, Response
+from fastapi import Body, FastAPI, Request, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from lightning_serve.strategies.base import Strategy
@@ -34,7 +34,7 @@ async def get_proxy(request: Request):
         return proxy_metadata
 
 
-def fn(request: Request, full_path: str):
+def fn(request: Request, full_path: str, payload):
     global proxy_metadata
 
     if not proxy_metadata:
@@ -42,18 +42,18 @@ def fn(request: Request, full_path: str):
         resp.status_code = 404
         return resp
 
-    response = strategy.make_request(request, full_path, proxy_metadata)
+    response = strategy.make_request(request, full_path, proxy_metadata, payload)
     return response.json()
 
 
 @app.post("/{full_path:path}")
-def global_post(request: Request, full_path: str):
-    return fn(request, full_path)
+def global_post(request: Request, full_path: str, payload: dict = Body(...)):
+    return fn(request, full_path, payload)
 
 
 @app.get("/{full_path:path}")
 def global_get(request: Request, full_path: str):
-    return fn(request, full_path)
+    return fn(request, full_path, None)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ class RootFlow(LightningFlow):
         super().__init__()
 
         self.serve = ServeFlow(
-            strategy="blue_green",
+            strategy="blue_green_v2",
             script_path="./scripts/serve.py",
         )
 

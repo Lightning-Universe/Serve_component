@@ -54,7 +54,7 @@ class ServeWork(LightningWork):
 
 
 class Proxy(LightningWork):
-    def __init__(self, *args, workers=6, **kwargs):
+    def __init__(self, *args, workers=4, **kwargs):
         super().__init__(
             *args,
             parallel=True,
@@ -78,6 +78,28 @@ class Proxy(LightningWork):
             f"{sys.executable} -m gunicorn --workers {self.workers} -k uvicorn.workers.UvicornWorker proxy:app -b {self.host}:{self.port}",
             check=True,
             shell=True,
+        )
+
+    def alive(self):
+        return self.url != ""
+
+
+class GinProxy(LightningWork):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            parallel=True,
+            raise_exception=True,
+            **kwargs,
+        )
+        self.workers = 1
+
+    def run(self, strategy=None, **kwargs):
+        subprocess.run(
+            f"go run main.go --host {self.host} --port {self.port}",
+            check=True,
+            shell=True,
+            cwd=os.path.join(os.path.dirname(__file__), "reverse_proxy"),
         )
 
     def alive(self):
@@ -177,6 +199,9 @@ class ServeFlow(LightningFlow):
         super().__init__()
         self._work_cls = ServeWork
         self._work_kwargs = work_kwargs
+        self.proxy = GinProxy() if strategy == "blue_green_v2" else Proxy()
+        self._warmup_steps_limit = 1 if strategy == "blue_green_v2" else 20
+        self._multiplier = 1 if strategy == "blue_green_v2" else self.proxy.workers * 20
         self._strategy = (
             strategy
             if isinstance(strategy, Strategy)
@@ -184,7 +209,6 @@ class ServeFlow(LightningFlow):
         )
         self.ws = List()
         self.hashes = []
-        self.proxy = Proxy()
         self._router_refresh = router_refresh
         self._strategy_run_after = 10
         self._last_update_time = time()
@@ -192,9 +216,6 @@ class ServeFlow(LightningFlow):
         self._previous_hash = None
         self._has_run_after = False
         self._warmup_steps = 0
-        self._warmup_steps_limit = 20
-        # self.grafana = GrafanaWork()
-        # self.prometheus = PrometheusWork()
 
     def run(self, **kwargs):
         # # Step 1: Start the proxy
@@ -216,7 +237,7 @@ class ServeFlow(LightningFlow):
                 if (new_update_time - self._last_update_time) > self._router_refresh:
                     print(f"[WARMUP] Refresh proxy: {len(self.ws)} server(s).")
                     # Send a burst of requests to update with the new information.
-                    for _ in range(self.proxy.workers * 20):
+                    for _ in range(self._multiplier):
                         _configure_session().post(
                             self.proxy.url + "/api/v1/proxy", json=res
                         )
@@ -237,7 +258,7 @@ class ServeFlow(LightningFlow):
                 elif (new_update_time - self._last_update_time) > self._router_refresh:
                     # Send a burst of requests to update with the new information.
                     print(f"Refresh proxy: {len(self.ws)} server(s).")
-                    for _ in range(self.proxy.workers * 20):
+                    for _ in range(self._multiplier):
                         _configure_session().post(
                             self.proxy.url + "/api/v1/proxy", json=res
                         )
