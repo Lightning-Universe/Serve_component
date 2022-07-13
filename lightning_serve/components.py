@@ -105,7 +105,7 @@ class GinProxy(LightningWork):
 
     def run(self, strategy=None, **kwargs):
         subprocess.run(
-            f"PATH=$PATH:/usr/local/go/bin go get .",
+            "PATH=$PATH:/usr/local/go/bin go get .",
             check=True,
             shell=True,
             cwd=os.path.join(os.path.dirname(__file__), "reverse_proxy"),
