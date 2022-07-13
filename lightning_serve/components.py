@@ -14,7 +14,7 @@ from lightning.app.structures import List
 
 from lightning_serve.strategies import _STRATEGY_REGISTRY
 from lightning_serve.strategies.base import Strategy
-from lightning_serve.utils import _configure_session
+from lightning_serve.utils import _configure_session, get_url
 
 
 class ServeWork(TracerPythonScript):
@@ -303,7 +303,7 @@ class ServeFlow(LightningFlow):
                     self._has_run_after = False
 
         if self.proxy.alive():
-            self.performance_tester.run(self.proxy.url)
+            self.performance_tester.run(get_url(self.proxy))
 
     def configure_layout(self):
         proxy_url = (
