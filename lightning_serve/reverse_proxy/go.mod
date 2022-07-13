@@ -3,7 +3,7 @@ module mod
 go 1.18
 
 require (
-	github.com/gin-gonic/gin v1.8.1
+	github.com/gorilla/mux v1.8.0
 	github.com/jmcvetta/randutil v0.0.0-20150817122601-2bb1b664bcff
 )
 
@@ -13,7 +13,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/goccy/go-json v0.9.8 // indirect
-	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect

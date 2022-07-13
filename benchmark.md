@@ -60,6 +60,68 @@ Percentage of the requests served within a certain time (ms)
  100%     80 (longest request)
 ```
 
+## Base Go
+
+```
+(.venv) ➜  lightning-serve git:(master) ✗ ab -n 10000 -c 1 -p payload.json -T "application/json" http://127.0.0.1:53411/predict
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 1000 requests
+Completed 2000 requests
+Completed 3000 requests
+Completed 4000 requests
+Completed 5000 requests
+Completed 6000 requests
+Completed 7000 requests
+Completed 8000 requests
+Completed 9000 requests
+Completed 10000 requests
+Finished 10000 requests
+
+
+Server Software:        uvicorn
+Server Hostname:        127.0.0.1
+Server Port:            53411
+
+Document Path:          /predict
+Document Length:        17 bytes
+
+Concurrency Level:      1
+Time taken for tests:   28.237 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      1420000 bytes
+Total body sent:        5210000
+HTML transferred:       170000 bytes
+Requests per second:    354.15 [#/sec] (mean)
+Time per request:       2.824 [ms] (mean)
+Time per request:       2.824 [ms] (mean, across all concurrent requests)
+Transfer rate:          49.11 [Kbytes/sec] received
+                        180.19 kb/s sent
+                        229.30 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.1      0       2
+Processing:     2    3   3.0      2     176
+Waiting:        2    3   3.0      2     176
+Total:          2    3   3.0      2     176
+
+Percentage of the requests served within a certain time (ms)
+  50%      2
+  66%      3
+  75%      3
+  80%      3
+  90%      3
+  95%      4
+  98%      6
+  99%     11
+ 100%    176 (longest request)
+```
+
 ### GoGin Go-coro
 
 ```bash

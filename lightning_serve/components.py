@@ -111,11 +111,15 @@ class GinProxy(LightningWork):
             cwd=os.path.join(os.path.dirname(__file__), "reverse_proxy"),
         )
 
+        print(f"Starting proxy in {self.host}:{self.port}")
+
         subprocess.run(
             f"PATH=$PATH:/usr/local/go/bin go run main.go --host {self.host} --port {self.port}",
             check=True,
             shell=True,
             cwd=os.path.join(os.path.dirname(__file__), "reverse_proxy"),
+            stdout=sys.stdout,
+            stderr=sys.stderr,
         )
 
     def alive(self):
