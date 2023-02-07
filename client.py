@@ -1,7 +1,7 @@
-import requests
 import os
 from time import sleep
 
+import requests
 from requests.models import Response
 
 while True:

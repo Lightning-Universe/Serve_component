@@ -10,7 +10,6 @@ from lightning_serve.utils import get_url
 
 
 class ABTestingStrategy(Strategy):
-
     METHODS = ["weighted", "headers", "cookie"]
 
     def __init__(self, method: str):

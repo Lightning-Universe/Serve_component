@@ -28,7 +28,6 @@ class Strategy(abc.ABC):
     def make_request(
         self, request: Request, full_path: str, local_router_metadata: Any, payload
     ) -> Response:
-
         if self._session is None:
             self._session = _configure_session()
 
