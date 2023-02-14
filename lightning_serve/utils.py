@@ -41,11 +41,7 @@ def _configure_session() -> Session:
 
 
 def _check_current_event_loop_policy() -> str:
-    policy = (
-        "uvloop"
-        if type(asyncio.get_event_loop_policy()).__module__.startswith("uvloop")
-        else "asyncio"
-    )
+    policy = "uvloop" if type(asyncio.get_event_loop_policy()).__module__.startswith("uvloop") else "asyncio"
     return policy
 
 

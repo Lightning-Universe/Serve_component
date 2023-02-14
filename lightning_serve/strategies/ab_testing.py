@@ -16,9 +16,7 @@ class ABTestingStrategy(Strategy):
         assert method in self.METHODS
         self.method = method
 
-    async def make_request(
-        self, request: Request, full_path: str, local_router_metadata: Any
-    ) -> Response:
+    async def make_request(self, request: Request, full_path: str, local_router_metadata: Any) -> Response:
         if self.method == "weighted":
             return await super().make_request(request, full_path, local_router_metadata)
         else:

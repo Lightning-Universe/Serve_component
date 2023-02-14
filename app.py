@@ -22,9 +22,7 @@ class RootFlow(LightningFlow):
             self._current_deploy_date = now
             self._next_deploy_date = now + timedelta(minutes=2)
 
-        self.serve.run(
-            random_kwargs=self._current_deploy_date.strftime("%m/%d/%Y %H:%M:%S")
-        )
+        self.serve.run(random_kwargs=self._current_deploy_date.strftime("%m/%d/%Y %H:%M:%S"))
 
     def configure_layout(self):
         return self.serve.configure_layout()

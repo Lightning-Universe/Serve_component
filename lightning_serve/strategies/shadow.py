@@ -19,9 +19,7 @@ class ShadowStrategy(Strategy):
         self.pool = None
         self.wait_for_shadow_result = wait_for_shadow_result
 
-    async def make_request(
-        self, request: Request, full_path: str, local_router_metadata: Any
-    ) -> Response:
+    async def make_request(self, request: Request, full_path: str, local_router_metadata: Any) -> Response:
         if not self.pool:
             self.pool = Pool()
 
@@ -43,9 +41,7 @@ class ShadowStrategy(Strategy):
             if self.wait_for_shadow_result:
                 shadow_result: Response = shadow_future.get()
                 if shadow_result.status_code != 200:
-                    print(
-                        f"The shadow server hasn't properly processed the request {shadow_result.json()}"
-                    )
+                    print(f"The shadow server hasn't properly processed the request {shadow_result.json()}")
             return current_result
 
     def run(self, serve_works: List[LightningWork]):

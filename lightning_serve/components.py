@@ -9,24 +9,22 @@ from time import time
 from deepdiff import DeepHash
 from lightning import LightningFlow
 from lightning.app import BuildConfig, LightningWork
-from lightning.app.components.python import TracerPythonScript
 from lightning.app.structures import List
 
 from lightning_serve.strategies import _STRATEGY_REGISTRY
 from lightning_serve.strategies.base import Strategy
 from lightning_serve.utils import _configure_session, get_url
 
-
-class ServeWork(TracerPythonScript):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, parallel=True, **kwargs)
-
-    def run(self, **kwargs):
-        self.script_args += [f"--host={self.host}", f"--port={self.port}"]
-        super().run(serve_work=self, **kwargs)
-
-    def alive(self):
-        return self.url != ""
+# class ServeWork(TracerPythonScript):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, parallel=True, **kwargs)
+#
+#     def run(self, **kwargs):
+#         self.script_args += [f"--host={self.host}", f"--port={self.port}"]
+#         super().run(serve_work=self, **kwargs)
+#
+#     def alive(self):
+#         return self.url != ""
 
 
 class ServeWork(LightningWork):
@@ -43,7 +41,8 @@ class ServeWork(LightningWork):
 
     def run(self, random_kwargs="", **kwargs):
         self._process = subprocess.run(
-            f"{sys.executable} -m gunicorn --workers {self.workers} -k uvicorn.workers.UvicornWorker serve:app -b {self.host}:{self.port}",
+            f"{sys.executable} -m gunicorn --workers {self.workers}"
+            f" -k uvicorn.workers.UvicornWorker serve:app -b {self.host}:{self.port}",
             check=True,
             shell=True,
             env={"random_kwargs": random_kwargs},
@@ -75,7 +74,8 @@ class Proxy(LightningWork):
         # )
 
         subprocess.run(
-            f"{sys.executable} -m gunicorn --workers {self.workers} -k uvicorn.workers.UvicornWorker proxy:app -b {self.host}:{self.port}",
+            f"{sys.executable} -m gunicorn --workers {self.workers}"
+            f" -k uvicorn.workers.UvicornWorker proxy:app -b {self.host}:{self.port}",
             check=True,
             shell=True,
         )
@@ -153,9 +153,7 @@ class GinProxy(LightningWork):
 class PrometheusWork(LightningWork):
     def __init__(self):
         super().__init__(
-            cloud_build_config=BuildConfig(
-                image="gcr.io/grid-backend-266721/prom/prometheus-serve:v0.0.1"
-            ),
+            cloud_build_config=BuildConfig(image="gcr.io/grid-backend-266721/prom/prometheus-serve:v0.0.1"),
             port=9090,
         )
 
@@ -166,9 +164,7 @@ class PrometheusWork(LightningWork):
 class GrafanaWork(LightningWork):
     def __init__(self):
         super().__init__(
-            cloud_build_config=BuildConfig(
-                image="gcr.io/grid-backend-266721/grafana-serve:v0.0.1"
-            ),
+            cloud_build_config=BuildConfig(image="gcr.io/grid-backend-266721/grafana-serve:v0.0.1"),
             port=3000,
         )
 
@@ -194,9 +190,7 @@ class ApacheHTTPServerBenchmarkingBuildConfig(BuildConfig):
 
 class ApacheHTTPServerBenchmarking(LightningWork):
     def __init__(self):
-        super().__init__(
-            cloud_build_config=ApacheHTTPServerBenchmarkingBuildConfig(), parallel=True
-        )
+        super().__init__(cloud_build_config=ApacheHTTPServerBenchmarkingBuildConfig(), parallel=True)
 
     def run(self, host: str):
         cmd = f'ab -n 10000 -c 1 -p payload.json -T "application/json" {host}/predict'
@@ -238,16 +232,8 @@ class ServeFlow(LightningFlow):
         self.proxy = GinProxy() if strategy == "blue_green_v2" else Proxy()
         self._warmup_steps_limit = 0 if strategy == "blue_green_v2" else 20
         self._multiplier = 1 if strategy == "blue_green_v2" else self.proxy.workers * 20
-        self.performance_tester = (
-            ApacheHTTPServerBenchmarking()
-            if strategy == "blue_green_v2"
-            else Locust(100)
-        )
-        self._strategy = (
-            strategy
-            if isinstance(strategy, Strategy)
-            else _STRATEGY_REGISTRY[strategy]()
-        )
+        self.performance_tester = ApacheHTTPServerBenchmarking() if strategy == "blue_green_v2" else Locust(100)
+        self._strategy = strategy if isinstance(strategy, Strategy) else _STRATEGY_REGISTRY[strategy]()
         self.ws = List()
         self.hashes = []
         self._router_refresh = router_refresh
@@ -278,9 +264,7 @@ class ServeFlow(LightningFlow):
                     print(f"[WARMUP] Refresh proxy: {len(self.ws)} server(s).")
                     # Send a burst of requests to update with the new information.
                     for _ in range(self._multiplier):
-                        _configure_session().post(
-                            self.proxy.url + "/api/v1/proxy", json=res
-                        )
+                        _configure_session().post(self.proxy.url + "/api/v1/proxy", json=res)
                     self._last_update_time = new_update_time
                     self._warmup_steps += 1
             else:
@@ -288,20 +272,14 @@ class ServeFlow(LightningFlow):
                 if res_hash == self._previous_hash:
                     if self._has_run_after:
                         return
-                    if (
-                        self.ws[-1].alive()
-                        and (new_update_time - self._last_update_time)
-                        > self._strategy_run_after
-                    ):
+                    if self.ws[-1].alive() and (new_update_time - self._last_update_time) > self._strategy_run_after:
                         self._strategy.on_after_run(self.ws, res)
                         self._has_run_after = True
                 else:
                     # Send a burst of requests to update with the new information.
                     print(f"Refresh proxy: {len(self.ws)} server(s).")
                     for _ in range(self._multiplier):
-                        _configure_session().post(
-                            self.proxy.url + "/api/v1/proxy", json=res
-                        )
+                        _configure_session().post(self.proxy.url + "/api/v1/proxy", json=res)
                     self._last_update_time = new_update_time
                     self._previous_hash = res_hash
                     self._has_run_after = False
@@ -310,11 +288,7 @@ class ServeFlow(LightningFlow):
             self.performance_tester.run(get_url(self.proxy))
 
     def configure_layout(self):
-        proxy_url = (
-            self.proxy.url + "/predict"
-            if self._warmup_steps >= self._warmup_steps_limit
-            else ""
-        )
+        proxy_url = self.proxy.url + "/predict" if self._warmup_steps >= self._warmup_steps_limit else ""
         return [
             {"name": "Serve", "content": proxy_url},
             {"name": "API Testing", "content": self.performance_tester},

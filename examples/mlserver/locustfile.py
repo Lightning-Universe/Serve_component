@@ -14,9 +14,7 @@ data = digits.images.reshape((n_samples, -1))
 classifier = svm.SVC(gamma=0.001)
 
 # Split data into train and test subsets
-X_train, X_test, y_train, y_test = train_test_split(
-    data, digits.target, test_size=0.5, shuffle=False
-)
+X_train, X_test, y_train, y_test = train_test_split(data, digits.target, test_size=0.5, shuffle=False)
 
 x_0 = X_test[0:1]
 inference_request = {
@@ -34,6 +32,4 @@ inference_request = {
 class HelloWorldUser(FastHttpUser):
     @task
     def predict(self):
-        self.client.post(
-            "/v2/models/mnist-svm/versions/v0.0.1/infer", json=inference_request
-        )
+        self.client.post("/v2/models/mnist-svm/versions/v0.0.1/infer", json=inference_request)
