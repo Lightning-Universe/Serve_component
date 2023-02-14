@@ -53,7 +53,10 @@ def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
     github_source_url = os.path.join(homepage, "raw", ver)
     # replace relative repository path to absolute link to the release
     #  do not replace all "docs" as in the readme we reger some other sources with particular path to docs
-    text = text.replace("docs/source/_static/", f"{os.path.join(github_source_url, 'docs/source/_static/')}")
+    text = text.replace(
+        "docs/source/_static/",
+        f"{os.path.join(github_source_url, 'docs/source/_static/')}",
+    )
 
     # readthedocs badge
     text = text.replace("badge/?version=stable", f"badge/?version={ver}")
@@ -66,7 +69,12 @@ def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
     skip_begin = r"<!-- following section will be skipped from PyPI description -->"
     skip_end = r"<!-- end skipping PyPI description -->"
     # todo: wrap content as commented description
-    text = re.sub(rf"{skip_begin}.+?{skip_end}", "<!--  -->", text, flags=re.IGNORECASE + re.DOTALL)
+    text = re.sub(
+        rf"{skip_begin}.+?{skip_end}",
+        "<!--  -->",
+        text,
+        flags=re.IGNORECASE + re.DOTALL,
+    )
 
     # # https://github.com/Borda/pytorch-lightning/releases/download/1.1.0a6/codecov_badge.png
     # github_release_url = os.path.join(homepage, "releases", "download", ver)

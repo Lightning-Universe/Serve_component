@@ -27,9 +27,7 @@ class TrainWork(LightningWork):
         classifier = svm.SVC(gamma=0.001)
 
         # Split data into train and test subsets
-        X_train, X_test, y_train, y_test = train_test_split(
-            data, digits.target, test_size=0.5, shuffle=False
-        )
+        X_train, X_test, y_train, y_test = train_test_split(data, digits.target, test_size=0.5, shuffle=False)
 
         # We learn the digits on the first half of the digits
         classifier.fit(X_train, y_train)

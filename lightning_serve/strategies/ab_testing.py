@@ -10,16 +10,13 @@ from lightning_serve.utils import get_url
 
 
 class ABTestingStrategy(Strategy):
-
     METHODS = ["weighted", "headers", "cookie"]
 
     def __init__(self, method: str):
         assert method in self.METHODS
         self.method = method
 
-    async def make_request(
-        self, request: Request, full_path: str, local_router_metadata: Any
-    ) -> Response:
+    async def make_request(self, request: Request, full_path: str, local_router_metadata: Any) -> Response:
         if self.method == "weighted":
             return await super().make_request(request, full_path, local_router_metadata)
         else:

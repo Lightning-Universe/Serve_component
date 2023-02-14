@@ -2,7 +2,6 @@ import asyncio
 import pickle
 
 from fastapi import Body, FastAPI, Request, Response
-from prometheus_fastapi_instrumentator import Instrumentator
 
 from lightning_serve.strategies.base import Strategy
 from lightning_serve.utils import install_uvloop_event_loop

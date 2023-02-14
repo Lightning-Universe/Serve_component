@@ -39,20 +39,19 @@ Inspired from [Kubernetes deployment strategies](https://github.com/ContainerSol
 - [x] recreate: terminate the old version and release the new one
 - [x] ramped: release a new version on a rolling update fashion, one after the other
 - [x] blue/green: release a new version alongside the old version then switch traffic
-- [] canary: release a new version to a subset of users, then proceed to a full rollout
+- \[\] canary: release a new version to a subset of users, then proceed to a full rollout
 - [x] a/b testing: release a new version to a subset of users in a precise way
-    - [] (HTTP headers)
-    - [] cookie
-    - [x] weighted
+  - \[\] (HTTP headers)
+  - \[\] cookie
+  - [x] weighted
 - [x] shadow: release a new version alongside the old version. Incoming traffic is mirrored to the new version and doesn't impact the response.
-
 
 ### Coming Soon
 
-- [] Batching Inference
-- [] Save, Load for any models (Tensorflow, Keras, PyTorch, PyTorch Lightning).
-- [] Auto Scale / Load Balancing
-- [] Sharded Inference
-- [] Native Optimized Kubernetes
-- [] Monitoring (Prometheus, Grafana)
-- [] Built-in Load Testing.
+- \[\] Batching Inference
+- \[\] Save, Load for any models (Tensorflow, Keras, PyTorch, PyTorch Lightning).
+- \[\] Auto Scale / Load Balancing
+- \[\] Sharded Inference
+- \[\] Native Optimized Kubernetes
+- \[\] Monitoring (Prometheus, Grafana)
+- \[\] Built-in Load Testing.

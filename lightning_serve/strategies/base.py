@@ -18,25 +18,18 @@ class Strategy(abc.ABC):
         method = request.method.lower()
         keys = list(local_router_metadata)
         if len(keys) > 1:
-            selected_url = np.random.choice(
-                keys, p=list(local_router_metadata.values())
-            )
+            selected_url = np.random.choice(keys, p=list(local_router_metadata.values()))
         else:
             selected_url = keys[0]
         return selected_url, method
 
-    def make_request(
-        self, request: Request, full_path: str, local_router_metadata: Any, payload
-    ) -> Response:
-
+    def make_request(self, request: Request, full_path: str, local_router_metadata: Any, payload) -> Response:
         if self._session is None:
             self._session = _configure_session()
 
         selected_url, method = self.select_url(request, local_router_metadata)
         if method == "post":
-            return getattr(self._session, method)(
-                selected_url + "/" + full_path, json=payload
-            )
+            return getattr(self._session, method)(selected_url + "/" + full_path, json=payload)
         else:
             return getattr(self._session, method)(selected_url + "/" + full_path)
 

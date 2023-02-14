@@ -48,10 +48,6 @@ async def predict_post(request: Request):
 
 
 if __name__ == "__main__":
-    import argparse
-
-    from uvicorn import run
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", type=str)
     parser.add_argument("--port", type=int)

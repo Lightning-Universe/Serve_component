@@ -1,5 +1,6 @@
 from time import time
 
+from lightning import LightningWork
 from lightning.app.structures import List
 
 from lightning_serve.strategies.base import Strategy
@@ -13,7 +14,7 @@ class RampedStrategy(Strategy):
         self.serve_works_ramped_time = {}
         self.ramped_scores = {}
 
-    def run(self, serve_works: List["LightningWork"]):
+    def run(self, serve_works: List[LightningWork]):
         # Step 1: Get ready time for each work.
         if len(serve_works) == 1:
             return {get_url(serve_works[-1]): 1.0}
